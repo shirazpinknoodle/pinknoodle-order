@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
 <meta charset="UTF-8">
@@ -74,18 +74,22 @@
   <div class="header">
     <div class="brand">Pink<span> Noodle</span></div>
     <div class="brand-sub">ثبت سفارش آنلاین</div>
-  </div>
-
-  <div class="section">
-    <div class="card">
-      <div class="section-title">💳 اطلاعات واریز</div>
-      <div class="pay-row"><span class="pay-label">بانک</span><span class="pay-value" id="pay-bank"></span></div>
-      <div class="pay-row"><span class="pay-label">شماره کارت</span><span><span class="pay-value" id="pay-card"></span><button class="copy-btn" onclick="copyCard()">کپی</button></span></div>
-      <div class="pay-row"><span class="pay-label">به نام</span><span class="pay-value" id="pay-owner"></span></div>
-      <div class="hint">لطفاً مبلغ سفارش رو به این شماره کارت واریز کنید و متن یا عکس فیش رو پایین فرم ثبت کنید.</div>
+    <div style="display:flex;gap:16px;justify-content:center;margin-top:10px;font-size:12px;color:var(--text3);">
+      <a href="tel:09015155863" style="color:var(--text3);text-decoration:none;display:flex;align-items:center;gap:4px;">📞 ۰۹۰۱۵۱۵۵۸۶۳</a>
+      <a href="https://instagram.com/shiraz.pink.noodle" target="_blank" style="color:var(--text3);text-decoration:none;display:flex;align-items:center;gap:4px;">📸 shiraz.pink.noodle</a>
     </div>
   </div>
 
+  <!-- ۱. منو و جمع کل -->
+  <div class="section">
+    <div class="card">
+      <div class="section-title">🍜 انتخاب از منو</div>
+      <div id="menu-list"></div>
+      <div class="total-row" style="border-top:1px solid var(--border);margin-top:8px;padding-top:14px;"><span>جمع کل</span><span id="order-total">۰ تومان</span></div>
+    </div>
+  </div>
+
+  <!-- ۲. مشخصات شما -->
   <div class="section">
     <div class="card">
       <div class="section-title">👤 مشخصات شما</div>
@@ -120,28 +124,7 @@
     </div>
   </div>
 
-  <div class="section">
-    <div class="card">
-      <div class="section-title">🍜 انتخاب از منو</div>
-      <div id="menu-list"></div>
-    </div>
-  </div>
-
-  <div class="section">
-    <div class="card">
-      <div class="section-title">🚴 روش دریافت سفارش</div>
-      <div class="hint" style="margin-top:0;margin-bottom:10px;">هزینه ارسال با پیک به عهده مشتری است.</div>
-      <div class="delivery-tabs" id="delivery-tabs">
-        <button type="button" class="delivery-tab active" data-type="pickup" onclick="setDeliveryType('pickup')">🏠 تحویل حضوری</button>
-        <button type="button" class="delivery-tab" data-type="delivery" onclick="setDeliveryType('delivery')">🛵 تحویل درب منزل</button>
-      </div>
-      <div class="form-group" id="address-group" style="display:none;margin-top:14px;margin-bottom:0">
-        <label class="form-label">آدرس دقیق *</label>
-        <textarea class="form-textarea" id="cust-address" placeholder="آدرس کامل برای ارسال سفارش..." style="min-height:60px"></textarea>
-      </div>
-    </div>
-  </div>
-
+  <!-- ۳. توضیحات سفارش -->
   <div class="section">
     <div class="card">
       <div class="section-title">📝 توضیحات سفارش (اختیاری)</div>
@@ -149,6 +132,18 @@
     </div>
   </div>
 
+  <!-- ۴. اطلاعات واریز -->
+  <div class="section">
+    <div class="card">
+      <div class="section-title">💳 اطلاعات واریز</div>
+      <div class="pay-row"><span class="pay-label">بانک</span><span class="pay-value" id="pay-bank"></span></div>
+      <div class="pay-row"><span class="pay-label">شماره کارت</span><span><span class="pay-value" id="pay-card"></span><button class="copy-btn" onclick="copyCard()">کپی</button></span></div>
+      <div class="pay-row"><span class="pay-label">به نام</span><span class="pay-value" id="pay-owner"></span></div>
+      <div class="hint">لطفاً مبلغ سفارش رو به این شماره کارت واریز کنید و متن یا عکس فیش رو پایین فرم ثبت کنید.</div>
+    </div>
+  </div>
+
+  <!-- ۵. فیش واریزی -->
   <div class="section">
     <div class="card">
       <div class="section-title">🧾 فیش واریزی</div>
@@ -168,13 +163,18 @@
     </div>
   </div>
 
+  <!-- ۶. ثبت سفارش -->
   <div class="section">
     <div class="card">
-      <div class="total-row"><span>جمع کل</span><span id="order-total">۰ تومان</span></div>
       <div class="err" id="form-error"></div>
       <button class="submit-btn" id="submit-btn" onclick="submitOnlineOrder()">ثبت سفارش</button>
       <div class="hint">پس از ثبت، سفارش شما توسط صندوق بررسی و تأیید می‌شود.</div>
     </div>
+  </div>
+
+  <div style="text-align:center;padding:18px 0 32px;display:flex;flex-direction:column;gap:8px;">
+    <a href="tel:09015155863" style="color:var(--text3);text-decoration:none;font-size:12px;">📞 ۰۹۰۱۵۱۵۵۸۶۳</a>
+    <a href="https://instagram.com/shiraz.pink.noodle" target="_blank" style="color:var(--text3);text-decoration:none;font-size:12px;">📸 instagram: shiraz.pink.noodle</a>
   </div>
 </div>
 
