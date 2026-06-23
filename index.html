@@ -1,116 +1,248 @@
-  .summary-value{font-weight:600;}
-  .total-row{display:flex; justify-content:space-between; align-items:center; padding:14px 0 4px; font-size:16px; font-weight:700; border-top:1px solid var(--border); margin-top:6px;}
-  .total-row span:last-child{color:var(--pink-light);}
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Pink Noodle | سفارش آنلاین</title>
+<style>
+:root{
+  --bg:#0A0A0A;--bg2:#171013;--bg3:#241820;--bg4:#3A2630;
+  --text:#FDF2F8;--text2:#F3C9DE;--text3:#A07C8D;
+  --pink:#EC4899;--pink-light:#F9A8D4;--pink-dark:#BE185D;
+  --border:#2A1B23;--radius:16px;--radius-sm:10px;
+  --green:#22C55E;--red:#F43F5E;--yellow:#F59E0B;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0;}
+body{font-family:Tahoma,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;max-width:430px;margin:0 auto;padding:0 0 48px;}
 
-  /* ── فیش ── */
-  .pay-row{display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--border); font-size:13px;}
-  .pay-row:last-child{border-bottom:none;}
-  .pay-label{color:var(--text3);}
-  .pay-value{color:var(--text); font-weight:600; direction:ltr; display:inline-block;}
-  .copy-btn{background:var(--bg3); border:1px solid var(--border); color:var(--pink-light); border-radius:8px; padding:4px 10px; font-size:11px; font-family:inherit; cursor:pointer; margin-right:8px;}
-  .file-drop{border:1.5px dashed var(--border); border-radius:var(--radius-sm); padding:18px; text-align:center; cursor:pointer; transition:.15s; position:relative;}
-  .file-drop.has-file{border-color:var(--pink); background:rgba(236,72,153,.06);}
-  .file-drop input{position:absolute; inset:0; opacity:0; cursor:pointer;}
-  .file-drop-text{font-size:12px; color:var(--text3);}
-  .preview-img{max-width:100%; max-height:160px; border-radius:10px; margin-top:10px;}
+.header{padding:28px 20px 16px;text-align:center;background-image:radial-gradient(circle at 20% 20%,rgba(236,72,153,.18),transparent 50%);}
+.brand{font-size:24px;font-weight:700;}.brand span{color:var(--pink);}
+.brand-sub{color:var(--text3);font-size:13px;margin-top:4px;}
+.header-links{display:flex;gap:16px;justify-content:center;margin-top:10px;font-size:12px;}
+.header-links a{color:var(--text3);text-decoration:none;}
 
-  /* ── صفحه موفق ── */
-  #success-screen{display:none; flex-direction:column; align-items:center; padding:60px 24px; text-align:center;}
-  .success-icon{width:72px; height:72px; border-radius:50%; background:rgba(34,197,94,.15); display:flex; align-items:center; justify-content:center; margin-bottom:18px;}
-  .success-title{font-size:18px; font-weight:700; margin-bottom:8px;}
-  .success-sub{font-size:13px; color:var(--text3); line-height:1.9;}
-  .order-code-box{background:var(--bg3); border:1px solid var(--border); border-radius:var(--radius-sm); padding:14px 20px; margin:18px 0; width:100%; text-align:center;}
-  .order-code-label{font-size:11px; color:var(--text3); margin-bottom:6px;}
-  .order-code-val{font-size:22px; font-weight:700; color:var(--pink-light); letter-spacing:2px;}
-  .order-code-phone{font-size:11px; color:var(--text3); margin-top:6px;}
+.section{padding:0 16px;margin-top:18px;}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;}
+.section-title{font-size:14px;font-weight:600;color:var(--text2);margin-bottom:12px;display:flex;align-items:center;gap:6px;}
+.form-group{margin-bottom:14px;}
+.form-label{font-size:12px;color:var(--text3);margin-bottom:6px;display:block;}
+.form-input,.form-textarea{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;color:var(--text);font-size:15px;font-family:inherit;outline:none;direction:rtl;}
+.form-input:focus,.form-textarea:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(236,72,153,.16);}
+.form-input.ltr{direction:ltr;text-align:left;}
+.form-textarea{resize:vertical;min-height:70px;}
+.btn-primary{width:100%;padding:15px;background:linear-gradient(135deg,#EC4899,#BE185D);border:none;border-radius:var(--radius-sm);color:#fff;font-size:16px;font-weight:600;font-family:inherit;cursor:pointer;box-shadow:0 4px 16px rgba(236,72,153,.35);}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed;}
+.btn-secondary{width:100%;padding:12px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text2);font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;}
+.err{color:var(--red);font-size:12px;margin-top:8px;min-height:16px;line-height:1.7;}
+.hint{font-size:11px;color:var(--text3);margin-top:8px;line-height:1.8;}
+.back-btn{background:none;border:none;color:var(--text3);font-size:13px;font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:4px;padding:6px 0;margin-bottom:4px;}
+.spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--pink);border-radius:50%;margin:0 auto 12px;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
 
-  /* ── صفحه پیگیری ── */
-  #track-screen{display:none; flex-direction:column; padding:0 16px 30px;}
-  .status-badge{display:inline-flex; align-items:center; gap:8px; padding:10px 18px; border-radius:20px; font-size:14px; font-weight:600;}
-  .status-pending{background:rgba(245,158,11,.12); border:1px solid rgba(245,158,11,.3); color:var(--yellow);}
-  .status-confirmed{background:rgba(236,72,153,.12); border:1px solid rgba(236,72,153,.3); color:var(--pink-light);}
-  .status-ready{background:rgba(34,197,94,.12); border:1px solid rgba(34,197,94,.3); color:var(--green);}
-  .status-rejected{background:rgba(244,63,94,.12); border:1px solid rgba(244,63,94,.3); color:var(--red);}
-  .track-order-card{background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); padding:16px; margin-top:12px;}
-  .track-order-num{font-size:20px; font-weight:700; color:var(--pink-light); margin-bottom:4px;}
-  .track-order-sub{font-size:12px; color:var(--text3); margin-bottom:12px;}
-  .track-items{font-size:13px; color:var(--text2); line-height:2;}
-  .track-divider{border:none; border-top:1px solid var(--border); margin:12px 0;}
-  .step-bar{display:flex; align-items:center; gap:0; margin:20px 0 8px;}
-  .step{flex:1; display:flex; flex-direction:column; align-items:center; position:relative;}
-  .step:not(:last-child)::after{content:''; position:absolute; top:13px; right:-50%; width:100%; height:2px; background:var(--border); z-index:0;}
-  .step.done:not(:last-child)::after{background:var(--pink);}
-  .step-dot{width:26px; height:26px; border-radius:50%; border:2px solid var(--border); background:var(--bg2); display:flex; align-items:center; justify-content:center; font-size:11px; z-index:1; position:relative;}
-  .step.done .step-dot{background:var(--pink); border-color:var(--pink); color:#fff;}
-  .step.active .step-dot{border-color:var(--pink); color:var(--pink);}
-  .step-label{font-size:10px; color:var(--text3); margin-top:5px; text-align:center;}
-  .step.done .step-label,.step.active .step-label{color:var(--text2);}
+/* ── صفحه بسته ── */
+#closed-screen{display:none;flex-direction:column;align-items:center;padding:50px 24px;text-align:center;}
+.closed-icon{font-size:52px;margin-bottom:16px;}
+.closed-title{font-size:20px;font-weight:700;margin-bottom:10px;}
+.closed-sub{font-size:13px;color:var(--text3);line-height:2.2;}
+.closed-time{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 24px;margin:18px 0;font-size:26px;font-weight:700;color:var(--pink-light);direction:ltr;letter-spacing:2px;}
+.closed-track-btn{margin-top:6px;width:100%;max-width:300px;padding:13px;background:rgba(236,72,153,.12);border:1.5px solid rgba(236,72,153,.35);border-radius:var(--radius-sm);color:var(--pink-light);font-size:14px;font-family:inherit;cursor:pointer;font-weight:600;}
 
-  /* مشترک */
-  .back-btn{background:none; border:none; color:var(--text3); font-size:13px; font-family:inherit; cursor:pointer; display:flex; align-items:center; gap:4px; padding:6px 0; margin-bottom:8px;}
-  .back-btn:hover{color:var(--text2);}
-  .empty-state{text-align:center; padding:60px 20px; color:var(--text3);}
-  .footer-links{text-align:center; padding:18px 0 32px; display:flex; flex-direction:column; gap:8px;}
-  .footer-links a{color:var(--text3); text-decoration:none; font-size:12px;}
+/* ── صفحه اول ── */
+#landing-screen{display:none;flex-direction:column;align-items:center;padding:0 16px 20px;}
+.landing-cards{display:flex;flex-direction:column;gap:12px;width:100%;margin-top:14px;}
+.landing-card{background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--radius);padding:20px 18px;cursor:pointer;display:flex;align-items:center;gap:16px;}
+.landing-card.order-card{border-color:rgba(236,72,153,.45);}
+.landing-card.track-card{border-color:rgba(160,124,141,.35);background:rgba(236,72,153,.04);}
+.landing-icon{font-size:30px;flex-shrink:0;}
+.landing-title{font-size:15px;font-weight:700;}
+.landing-desc{font-size:12px;color:var(--text3);margin-top:4px;line-height:1.7;}
+.open-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);border-radius:20px;padding:3px 10px;font-size:11px;color:var(--green);margin-top:8px;}
+.open-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:blink 1.4s infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.3;}}
+
+/* ── منو ── */
+.menu-item{border-bottom:1px solid var(--border);padding:12px 0;}
+.menu-item:last-child{border-bottom:none;}
+.mi-name{font-size:14px;font-weight:600;}
+.mi-price{font-size:12px;color:var(--text3);margin-top:2px;}
+.mi-row{display:flex;align-items:center;justify-content:space-between;}
+.qty-ctrl{display:flex;align-items:center;gap:10px;background:var(--bg3);border-radius:10px;padding:4px;}
+.qty-btn{width:30px;height:30px;border-radius:8px;border:none;background:var(--bg4);color:var(--text);font-size:18px;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.qty-val{min-width:20px;text-align:center;font-size:14px;font-weight:600;}
+.sauce-row{margin-top:8px;padding-top:8px;display:none;flex-direction:column;gap:6px;}
+.sauce-row.visible{display:flex;}
+.sauce-label-txt{font-size:11px;color:var(--text3);}
+.sauce-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;}
+.sauce-chip{background:var(--bg4);border:1px solid var(--border);border-radius:20px;padding:4px 12px;font-size:11px;color:var(--text3);cursor:pointer;}
+.sauce-chip.active{background:rgba(236,72,153,.2);border-color:var(--pink);color:var(--pink-light);}
+
+/* تخفیف */
+.discount-row{display:flex;gap:8px;}
+.discount-row .form-input{flex:1;}
+.discount-apply{padding:0 16px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text2);font-size:13px;font-family:inherit;cursor:pointer;font-weight:600;white-space:nowrap;}
+.discount-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);border-radius:20px;padding:5px 12px;font-size:12px;color:var(--green);}
+.remove-discount{background:none;border:none;color:var(--green);cursor:pointer;font-size:14px;padding:0;line-height:1;}
+
+/* زمان */
+.time-slots{display:flex;flex-wrap:wrap;gap:8px;}
+.time-slot{padding:8px 14px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg);color:var(--text2);font-size:13px;font-family:inherit;cursor:pointer;}
+.time-slot.active{background:rgba(236,72,153,.15);border-color:var(--pink);color:var(--pink-light);font-weight:600;}
+.custom-time-wrap{margin-top:10px;display:none;}
+.custom-time-wrap.visible{display:block;}
+
+/* خلاصه */
+.summary-row{display:flex;justify-content:space-between;font-size:13px;padding:7px 0;border-bottom:1px solid var(--border);}
+.summary-row:last-child{border-bottom:none;}
+.summary-label{color:var(--text3);}
+.total-row{display:flex;justify-content:space-between;align-items:center;padding:14px 0 4px;font-size:16px;font-weight:700;border-top:1px solid var(--border);margin-top:6px;}
+.total-row span:last-child{color:var(--pink-light);}
+
+/* پرداخت */
+.pay-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;}
+.pay-row:last-child{border-bottom:none;}
+.pay-label{color:var(--text3);}
+.pay-value{color:var(--text);font-weight:600;direction:ltr;display:inline-block;}
+.copy-btn{background:var(--bg3);border:1px solid var(--border);color:var(--pink-light);border-radius:8px;padding:4px 10px;font-size:11px;font-family:inherit;cursor:pointer;margin-right:8px;}
+.file-drop{border:1.5px dashed var(--border);border-radius:var(--radius-sm);padding:18px;text-align:center;cursor:pointer;transition:.15s;position:relative;}
+.file-drop.has-file{border-color:var(--pink);background:rgba(236,72,153,.06);}
+.file-drop input{position:absolute;inset:0;opacity:0;cursor:pointer;}
+.file-drop-text{font-size:12px;color:var(--text3);}
+.preview-img{max-width:100%;max-height:160px;border-radius:10px;margin-top:10px;}
+
+/* step bar */
+.step-bar{display:flex;align-items:center;margin:16px 0 8px;}
+.step{flex:1;display:flex;flex-direction:column;align-items:center;position:relative;}
+.step:not(:last-child)::after{content:'';position:absolute;top:13px;right:-50%;width:100%;height:2px;background:var(--border);z-index:0;}
+.step.done:not(:last-child)::after{background:var(--pink);}
+.step-dot{width:26px;height:26px;border-radius:50%;border:2px solid var(--border);background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:11px;z-index:1;position:relative;}
+.step.done .step-dot{background:var(--pink);border-color:var(--pink);color:#fff;}
+.step.active .step-dot{border-color:var(--pink);color:var(--pink);}
+.step-label{font-size:10px;color:var(--text3);margin-top:5px;text-align:center;}
+.step.done .step-label,.step.active .step-label{color:var(--text2);}
+
+/* وضعیت سفارش */
+.status-badge{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:20px;font-size:13px;font-weight:600;}
+.status-draft{background:rgba(160,124,141,.12);border:1px solid rgba(160,124,141,.3);color:var(--text3);}
+.status-pending{background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.3);color:var(--yellow);}
+.status-confirmed{background:rgba(236,72,153,.12);border:1px solid rgba(236,72,153,.3);color:var(--pink-light);}
+.status-preparing{background:rgba(236,72,153,.18);border:1px solid rgba(236,72,153,.4);color:var(--pink-light);}
+.status-ready{background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.3);color:var(--green);}
+.status-rejected{background:rgba(244,63,94,.12);border:1px solid rgba(244,63,94,.3);color:var(--red);}
+.track-order-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-top:14px;}
+.track-order-num{font-size:18px;font-weight:700;color:var(--pink-light);margin-bottom:4px;}
+.track-divider{border:none;border-top:1px solid var(--border);margin:12px 0;}
+
+/* موفقیت */
+#success-screen{display:none;flex-direction:column;align-items:center;padding:60px 24px;text-align:center;}
+.success-icon{width:72px;height:72px;border-radius:50%;background:rgba(34,197,94,.15);display:flex;align-items:center;justify-content:center;margin-bottom:18px;}
+.success-title{font-size:18px;font-weight:700;margin-bottom:8px;}
+.success-sub{font-size:13px;color:var(--text3);line-height:1.9;}
+.order-code-box{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 20px;margin:18px 0;width:100%;text-align:center;}
+.order-code-label{font-size:11px;color:var(--text3);margin-bottom:6px;}
+.order-code-val{font-size:22px;font-weight:700;color:var(--pink-light);letter-spacing:2px;}
+.order-code-sub{font-size:11px;color:var(--text3);margin-top:6px;}
+
+/* alert box */
+.alert-box{border-radius:var(--radius-sm);padding:12px 14px;font-size:12px;line-height:1.8;margin-bottom:12px;}
+.alert-info{background:rgba(236,72,153,.08);border:1px solid rgba(236,72,153,.25);color:var(--pink-light);}
+.alert-warning{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);color:var(--yellow);}
+.alert-success{background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.25);color:var(--green);}
+
+.footer-links{text-align:center;padding:18px 0 32px;display:flex;flex-direction:column;gap:8px;}
+.footer-links a{color:var(--text3);text-decoration:none;font-size:12px;}
+.empty-state{text-align:center;padding:60px 20px;color:var(--text3);}
 </style>
 </head>
 <body>
 
-<!-- ── لودر ── -->
-<div id="loader" class="loader" style="display:flex;">
+<!-- لودر -->
+<div id="loader" style="display:flex;flex-direction:column;align-items:center;padding-top:90px;">
   <div class="spinner"></div>
   <div class="hint">در حال بارگذاری...</div>
 </div>
 
-<!-- ── هدر (مشترک) ── -->
+<!-- هدر -->
 <div id="main-header" class="header" style="display:none;">
   <div class="brand">Pink<span> Noodle</span></div>
-  <div class="brand-sub">سفارش آنلاین</div>
-  <div style="display:flex;gap:16px;justify-content:center;margin-top:10px;font-size:12px;color:var(--text3);">
-    <a href="tel:09015155863" style="color:var(--text3);text-decoration:none;">📞 ۰۹۰۱۵۱۵۵۸۶۳</a>
-    <a href="https://instagram.com/shiraz.pink.noodle" target="_blank" style="color:var(--text3);text-decoration:none;">📸 shiraz.pink.noodle</a>
+  <div class="brand-sub" id="header-sub">سفارش آنلاین</div>
+  <div class="header-links">
+    <a href="tel:09015155863">📞 ۰۹۰۱۵۱۵۵۸۶۳</a>
+    <a href="https://instagram.com/shiraz.pink.noodle" target="_blank">📸 shiraz.pink.noodle</a>
   </div>
 </div>
 
-<!-- ══════════ صفحه ۱: انتخاب حالت ══════════ -->
-<div id="landing-screen" style="display:none;">
+<!-- ══ صفحه بسته ══ -->
+<div id="closed-screen">
+  <div class="closed-icon">🌙</div>
+  <div class="closed-title">فروشگاه در حال حاضر بسته است</div>
+  <div class="closed-sub">
+    سفارش آنلاین Pink Noodle<br>
+    فقط بین ساعت ۲۰:۰۰ تا ۲۲:۰۰ فعال است.
+  </div>
+  <div class="closed-time" id="closed-clock">--:--</div>
+  <div class="closed-sub" style="margin-bottom:14px;">اگر قبلاً سفارش ثبت کردی و می‌خوای پرداخت کنی، از دکمه زیر وارد شو:</div>
+  <button class="closed-track-btn" onclick="showTrack()">🔍 ادامه خرید یا پیگیری سفارش</button>
+</div>
+
+<!-- ══ صفحه اول (لندینگ) ══ -->
+<div id="landing-screen" style="display:none;flex-direction:column;align-items:center;padding:0 16px 20px;">
+  <div style="width:100%;">
+    <div class="alert-info" style="margin-top:16px;">
+      🕗 سفارش‌گیری آنلاین از ساعت ۲۰:۰۰ تا ۲۲:۰۰
+      <div class="open-badge" style="margin-top:6px;"><span class="open-dot"></span>الان باز هستیم</div>
+    </div>
+  </div>
   <div class="landing-cards">
-    <div class="landing-card" onclick="goToOrder()">
+    <div class="landing-card order-card" onclick="goToOrder()">
       <div class="landing-icon">🍜</div>
       <div>
         <div class="landing-title">ثبت سفارش جدید</div>
-        <div class="landing-desc">انتخاب از منو، افزودن سس، کد تخفیف و تعیین ساعت تحویل</div>
+        <div class="landing-desc">انتخاب از منو، انتخاب سس، کد تخفیف و تعیین ساعت تحویل</div>
       </div>
     </div>
-    <div class="landing-card" onclick="goToTrack()">
-      <div class="landing-icon">🔍</div>
+    <div class="landing-card track-card" onclick="showTrack()">
+      <div class="landing-icon">🔄</div>
       <div>
-        <div class="landing-title">پیگیری سفارش</div>
-        <div class="landing-desc">با شماره موبایل وضعیت سفارشت رو ببین یا سفارش ثبت‌شده رو نهایی کن</div>
+        <div class="landing-title">ادامه خرید یا پیگیری سفارش</div>
+        <div class="landing-desc">اگر قبلاً سفارش ثبت کردی، اینجا پرداخت کن یا وضعیتش رو ببین</div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ══════════ صفحه ۲: فرم سفارش ══════════ -->
+<!-- ══ صفحه ۲: فرم سفارش (مرحله اول) ══ -->
 <div id="order-screen" style="display:none;">
-
   <div class="section">
     <button class="back-btn" onclick="showLanding()">← بازگشت</button>
 
-    <!-- منو -->
+    <!-- پیشرفت مرحله -->
+    <div class="card" style="padding:12px 16px;">
+      <div style="font-size:12px;color:var(--text3);margin-bottom:10px;">مرحله ۱ از ۲ — انتخاب سفارش</div>
+      <div class="step-bar">
+        <div class="step done">
+          <div class="step-dot">۱</div>
+          <div class="step-label">انتخاب سفارش</div>
+        </div>
+        <div class="step">
+          <div class="step-dot">۲</div>
+          <div class="step-label">پرداخت</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- منو -->
+  <div class="section">
     <div class="card">
       <div class="section-title">🍜 انتخاب از منو</div>
       <div id="menu-list"></div>
-      <!-- خلاصه قیمت -->
       <div style="margin-top:12px;">
         <div class="summary-row" id="subtotal-row" style="display:none;">
-          <span class="summary-label">جمع آیتم‌ها</span>
-          <span class="summary-value" id="subtotal-val"></span>
+          <span class="summary-label">جمع آیتم‌ها</span><span id="subtotal-val"></span>
         </div>
         <div class="summary-row" id="discount-row" style="display:none;">
           <span class="summary-label" id="discount-label">تخفیف</span>
-          <span class="summary-value" style="color:var(--green);" id="discount-val"></span>
+          <span style="color:var(--green);" id="discount-val"></span>
         </div>
         <div class="total-row"><span>جمع کل</span><span id="order-total">۰ تومان</span></div>
       </div>
@@ -123,9 +255,9 @@
       <div class="section-title">🎟️ کد تخفیف</div>
       <div id="discount-applied-wrap" style="display:none;">
         <div class="discount-badge">
-          <span>✓ کد تخفیف اعمال شد</span>
+          <span>✓ کد تخفیف اعمال شد —</span>
           <span id="discount-applied-txt"></span>
-          <button class="remove-discount" onclick="removeDiscount()" title="حذف">✕</button>
+          <button class="remove-discount" onclick="removeDiscount()">✕</button>
         </div>
       </div>
       <div id="discount-input-wrap">
@@ -146,10 +278,10 @@
         <label class="form-label">نام و نام خانوادگی</label>
         <input class="form-input" id="cust-name" type="text" placeholder="مثال: علی محمدی">
       </div>
-      <div class="form-group" style="margin-bottom:0">
+      <div class="form-group" style="margin-bottom:0;">
         <label class="form-label">شماره موبایل *</label>
         <input class="form-input ltr" id="cust-phone" type="tel" placeholder="09..." maxlength="11">
-        <div class="hint">برای پیگیری سفارش به این شماره نیاز داری</div>
+        <div class="hint">⚠️ با این شماره می‌تونی بعداً برگردی و پرداخت رو تکمیل کنی</div>
       </div>
     </div>
   </div>
@@ -173,7 +305,7 @@
       </div>
       <div id="address-wrap" style="display:none;">
         <label class="form-label">آدرس کامل *</label>
-        <textarea class="form-textarea" id="cust-address" placeholder="شیراز، خیابان...، کوچه...، پلاک..." style="min-height:80px"></textarea>
+        <textarea class="form-textarea" id="cust-address" placeholder="شیراز، خیابان...، کوچه...، پلاک..." style="min-height:80px;"></textarea>
       </div>
     </div>
   </div>
@@ -181,12 +313,14 @@
   <!-- زمان تحویل -->
   <div class="section">
     <div class="card">
-      <div class="section-title">⏰ زمان تحویل *</div>
-      <div class="hint" style="margin-top:0;margin-bottom:12px;">زودترین زمان ممکن: <strong id="earliest-time" style="color:var(--pink-light)"></strong> — یک ساعت انتخاب کن</div>
+      <div class="section-title">⏰ ساعت تحویل *</div>
+      <div class="hint" style="margin-top:0;margin-bottom:12px;">
+        زودترین زمان: <strong id="earliest-time" style="color:var(--pink-light);"></strong>
+      </div>
       <div class="time-slots" id="time-slots"></div>
       <div class="custom-time-wrap" id="custom-time-wrap">
         <label class="form-label" style="margin-top:10px;">ساعت دلخواه</label>
-        <input class="form-input ltr" id="custom-time" type="time" step="300" placeholder="HH:MM">
+        <input class="form-input ltr" id="custom-time" type="time" step="300">
         <div class="err" id="time-err"></div>
       </div>
     </div>
@@ -197,6 +331,52 @@
     <div class="card">
       <div class="section-title">📝 توضیحات (اختیاری)</div>
       <textarea class="form-textarea" id="order-note" placeholder="مثال: بدون پیاز، تند کم..."></textarea>
+    </div>
+  </div>
+
+  <!-- دکمه مرحله اول -->
+  <div class="section">
+    <div class="card">
+      <div class="alert-info" style="margin-bottom:12px;">
+        📌 پس از ثبت اولیه، می‌تونی از صفحه اصلی با شماره‌ات برگردی و پرداخت رو تکمیل کنی.
+      </div>
+      <div class="err" id="form-error"></div>
+      <button class="btn-primary" id="draft-btn" onclick="saveDraft()">ثبت سفارش و رفتن به پرداخت ←</button>
+    </div>
+  </div>
+
+  <div class="footer-links">
+    <a href="tel:09015155863">📞 ۰۹۰۱۵۱۵۵۸۶۳</a>
+    <a href="https://instagram.com/shiraz.pink.noodle" target="_blank">📸 shiraz.pink.noodle</a>
+  </div>
+</div>
+
+<!-- ══ صفحه ۳: پرداخت (مرحله دوم) ══ -->
+<div id="payment-screen" style="display:none;">
+  <div class="section">
+    <button class="back-btn" id="payment-back-btn" onclick="showLanding()">← بازگشت</button>
+
+    <!-- پیشرفت -->
+    <div class="card" style="padding:12px 16px;">
+      <div style="font-size:12px;color:var(--text3);margin-bottom:10px;">مرحله ۲ از ۲ — پرداخت</div>
+      <div class="step-bar">
+        <div class="step done">
+          <div class="step-dot">✓</div>
+          <div class="step-label">انتخاب سفارش</div>
+        </div>
+        <div class="step active">
+          <div class="step-dot">۲</div>
+          <div class="step-label">پرداخت</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- خلاصه سفارش -->
+  <div class="section">
+    <div class="card">
+      <div class="section-title">📋 خلاصه سفارش شما</div>
+      <div id="payment-summary"></div>
     </div>
   </div>
 
@@ -220,26 +400,26 @@
       <div class="section-title">🧾 فیش واریزی</div>
       <div class="form-group">
         <label class="form-label">متن یا کد رهگیری (اختیاری)</label>
-        <textarea class="form-textarea" id="receipt-text" placeholder="مثال: کد رهگیری ۱۲۳۴۵۶ - ساعت ۱۴:۳۰" style="min-height:50px"></textarea>
+        <textarea class="form-textarea" id="receipt-text" placeholder="مثال: کد رهگیری ۱۲۳۴۵۶ - ساعت ۱۴:۳۰" style="min-height:50px;"></textarea>
       </div>
-      <div class="form-group" style="margin-bottom:0">
+      <div class="form-group" style="margin-bottom:0;">
         <label class="form-label">عکس فیش (اختیاری)</label>
         <div class="file-drop" id="file-drop">
           <input type="file" id="receipt-file" accept="image/*" onchange="onFileSelected(event)">
           <div class="file-drop-text" id="file-drop-text">برای انتخاب عکس فیش ضربه بزنید</div>
         </div>
-        <img id="receipt-preview" class="preview-img" style="display:none">
+        <img id="receipt-preview" class="preview-img" style="display:none;">
       </div>
       <div class="hint">حداقل یکی از متن یا عکس فیش رو وارد کن.</div>
     </div>
   </div>
 
-  <!-- ثبت -->
+  <!-- تأیید نهایی -->
   <div class="section">
     <div class="card">
-      <div class="err" id="form-error"></div>
-      <button class="btn-primary" id="submit-btn" onclick="submitOnlineOrder()">ثبت سفارش</button>
-      <div class="hint">پس از ثبت، سفارش شما توسط صندوق بررسی و تأیید می‌شود.</div>
+      <div class="err" id="payment-error"></div>
+      <button class="btn-primary" id="pay-btn" onclick="finalizeOrder()">✅ تأیید نهایی و ثبت سفارش</button>
+      <div class="hint" style="margin-top:10px;">پس از ثبت فیش، سفارش شما برای بررسی به صندوق ارسال می‌شود.</div>
     </div>
   </div>
 
@@ -249,41 +429,43 @@
   </div>
 </div>
 
-<!-- ══════════ صفحه ۳: پیگیری / تأیید نهایی ══════════ -->
+<!-- ══ صفحه ۴: پیگیری ══ -->
 <div id="track-screen" style="display:none;">
   <div class="section" style="margin-top:10px;">
-    <button class="back-btn" onclick="showLanding()">← بازگشت</button>
+    <button class="back-btn" id="track-back-btn" onclick="showLanding()">← بازگشت</button>
     <div class="card">
-      <div class="section-title">🔍 پیگیری سفارش</div>
+      <div class="section-title">🔄 ادامه خرید یا پیگیری سفارش</div>
       <div class="form-group">
         <label class="form-label">شماره موبایل *</label>
         <input class="form-input ltr" id="track-phone" type="tel" placeholder="09..." maxlength="11">
       </div>
       <div class="err" id="track-err"></div>
-      <button class="btn-primary" id="track-btn" onclick="trackOrders()" style="margin-top:6px;">جستجو</button>
+      <button class="btn-primary" id="track-btn" onclick="trackOrders()">جستجوی سفارش</button>
     </div>
-    <div id="track-results" style="margin-top:0;"></div>
+    <div id="track-results"></div>
   </div>
 </div>
 
-<!-- ══════════ صفحه ۴: موفقیت ══════════ -->
+<!-- ══ صفحه ۵: موفقیت ══ -->
 <div id="success-screen">
   <div class="success-icon">
     <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#22C55E" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
   </div>
-  <div class="success-title">سفارش ثبت شد ✓</div>
-  <div class="success-sub">سفارش شما برای بررسی به صندوق ارسال شد.<br>پس از تأیید، آماده‌سازی شروع می‌شه.</div>
+  <div class="success-title">سفارش شما نهایی شد ✓</div>
+  <div class="success-sub">سفارش و فیش پرداختی ارسال شد.<br>به محض بررسی توسط صندوق، آماده‌سازی شروع می‌شه.</div>
   <div class="order-code-box">
-    <div class="order-code-label">کد پیگیری سفارش</div>
-    <div class="order-code-val" id="success-order-num"></div>
-    <div class="order-code-phone" id="success-order-time"></div>
+    <div class="order-code-label">کد پیگیری</div>
+    <div class="order-code-val" id="success-order-num">—</div>
+    <div class="order-code-sub" id="success-order-info"></div>
   </div>
-  <div class="success-sub" style="font-size:12px;">برای پیگیری وضعیت سفارش، با همین شماره موبایل وارد بخش «پیگیری سفارش» بشو.</div>
-  <button class="btn-secondary" onclick="location.reload()" style="margin-top:24px; max-width:280px;">ثبت سفارش جدید</button>
-  <button class="btn-secondary" onclick="goToTrackAfterSuccess()" style="margin-top:10px; max-width:280px;">پیگیری سفارش</button>
+  <div class="success-sub" style="font-size:12px;margin-top:4px;">
+    برای پیگیری وضعیت، از صفحه اول «ادامه خرید یا پیگیری سفارش» رو انتخاب کن.
+  </div>
+  <button class="btn-secondary" onclick="location.reload()" style="margin-top:24px;max-width:280px;">ثبت سفارش جدید</button>
+  <button class="btn-secondary" onclick="goToTrackAfterSuccess()" style="margin-top:10px;max-width:280px;">🔍 پیگیری سفارش</button>
 </div>
 
-<!-- ── خطا ── -->
+<!-- خطا -->
 <div id="empty-state" class="empty-state" style="display:none;">
   <div style="font-size:34px;margin-bottom:10px;">😕</div>
   <div id="empty-state-msg">منو در حال حاضر در دسترس نیست.</div>
@@ -291,60 +473,31 @@
 
 <script>
 // ══════════ تنظیمات ══════════
-const SUPA_URL = 'https://gbymdspqphkoedmvinwf.supabase.co';
-const SUPA_KEY = 'sb_publishable_-NcF4pRbxXYak1gbfRftMw_bdlGDaXU';
+const SUPA_URL  = 'https://gbymdspqphkoedmvinwf.supabase.co';
+const SUPA_KEY  = 'sb_publishable_-NcF4pRbxXYak1gbfRftMw_bdlGDaXU';
+const PAYMENT_INFO = { bank:'بلو بانک', card:'6219-8618-7915-3624', owner:'محمد شایگان' };
 
-const PAYMENT_INFO = {
-  bank: 'بلو بانک',
-  card: '6219-8618-7915-3624',
-  owner: 'محمد شایگان'
-};
+// ساعات باز بودن
+let OPEN_HOUR  = 20;  // پیش‌فرض — از Supabase بارگذاری می‌شود
+let CLOSE_HOUR = 22;  // پیش‌فرض — از Supabase بارگذاری می‌شود
 
-// کدهای تخفیف — {کد: درصد}
-// برای افزودن یا حذف کدها، همین آبجکت رو ویرایش کن
-const DISCOUNT_CODES = {
-  'PINK10': 10,
-  'VIP20': 20,
-  'WELCOME15': 15
-};
+// کدهای تخفیف  {کد: درصد}
+const DISCOUNT_CODES = { 'PINK10':10, 'VIP20':20, 'WELCOME15':15 };
 
-// سس‌های موجود
-const SAUCES = ['سس تری یاکی', 'سس آلفردو صورتی', 'سس تند گوجوچانگ', 'سس بادم زمینی تاکی'];
+// سس‌ها
+const SAUCES = ['سس کچاپ','سس مایونز','سس تند','سس سیر','سس باربیکیو','سس خردل'];
 
 // ══════════ state ══════════
-let menu = [];
-let qtyMap = {};
-let sauceMap = {}; // {itemId: ['سس کچاپ', ...]}
-let deliveryType = 'pickup';
-let selectedFile = null;
+let menu        = [];
+let qtyMap      = {};
+let sauceMap    = {};
+let deliveryType= 'pickup';
+let selectedFile= null;
 let discountPct = 0;
-let discountCode = '';
-let selectedTime = null;
-let lastPhone = '';
-let lastOrderNum = '';
-
-// ══════════ صفحه‌بندی ══════════
-function showScreen(id){
-  ['loader','landing-screen','order-screen','track-screen','success-screen','empty-state'].forEach(s=>{
-    const el = document.getElementById(s);
-    if(el) el.style.display='none';
-  });
-  const el = document.getElementById(id);
-  if(el) el.style.display = (id === 'landing-screen' || id === 'track-screen') ? 'flex' : 'block';
-}
-
-function showLanding(){ showScreen('landing-screen'); }
-function goToOrder(){ showScreen('order-screen'); buildTimeSlots(); }
-function goToTrack(){
-  showScreen('track-screen');
-  // اگر قبلاً سفارش دادیم شماره رو پر کن
-  if(lastPhone) document.getElementById('track-phone').value = lastPhone;
-}
-function goToTrackAfterSuccess(){
-  document.getElementById('track-phone').value = lastPhone;
-  showScreen('track-screen');
-  trackOrders();
-}
+let discountCode= '';
+let selectedTime= null;
+let currentDraftId = null;   // id ردیف draft در Supabase
+let lastPhone   = '';
 
 // ══════════ ابزارها ══════════
 function normalizePhone(s){
@@ -356,26 +509,104 @@ function normalizePhone(s){
 function fmt(n){ return Math.round(n).toLocaleString('fa-IR'); }
 function tp(s){ return String(s).replace(/[0-9]/g,w=>String.fromCharCode(w.charCodeAt(0)+1728)); }
 function supaFetch(path, opts={}){
-  const headers = { 'apikey': SUPA_KEY, 'Authorization': 'Bearer '+SUPA_KEY, ...(opts.headers||{}) };
-  return fetch(SUPA_URL + path, {...opts, headers});
+  return fetch(SUPA_URL+path, {
+    ...opts,
+    headers:{ 'apikey':SUPA_KEY, 'Authorization':'Bearer '+SUPA_KEY, ...(opts.headers||{}) }
+  });
+}
+function isShopOpen(){
+  const h = new Date().getHours();
+  return h >= OPEN_HOUR && h < CLOSE_HOUR;
 }
 
-// ══════════ بارگذاری منو ══════════
-async function loadMenu(){
-  document.getElementById('pay-bank').textContent = PAYMENT_INFO.bank;
-  document.getElementById('pay-card').textContent = PAYMENT_INFO.card;
-  document.getElementById('pay-owner').textContent = PAYMENT_INFO.owner;
+// ══════════ ساعت زنده ══════════
+function startClock(){
+  function tick(){
+    const now = new Date();
+    const hh = String(now.getHours()).padStart(2,'0');
+    const mm = String(now.getMinutes()).padStart(2,'0');
+    const el = document.getElementById('closed-clock');
+    if(el) el.textContent = hh+':'+mm;
+  }
+  tick();
+  setInterval(tick, 10000);
+}
 
-  let res, rows;
+// ══════════ صفحه‌بندی ══════════
+const SCREENS = ['loader','closed-screen','paused-screen','landing-screen','order-screen',
+                 'payment-screen','track-screen','success-screen','empty-state'];
+function showScreen(id){
+  SCREENS.forEach(s=>{
+    const el = document.getElementById(s);
+    if(!el) return;
+    el.style.display = 'none';
+  });
+  const el = document.getElementById(id);
+  if(!el) return;
+  // flex screens
+  const flexScreens = ['closed-screen','paused-screen','landing-screen','success-screen'];
+  el.style.display = flexScreens.includes(id) ? 'flex' : 'block';
+}
+
+function showLanding(){
+  if(isShopOpen()) showScreen('landing-screen');
+  else showScreen('closed-screen');
+}
+function showTrack(){
+  document.getElementById('track-back-btn').onclick = isShopOpen()
+    ? ()=>showScreen('landing-screen')
+    : ()=>showScreen('closed-screen');
+  showScreen('track-screen');
+  if(lastPhone) document.getElementById('track-phone').value = lastPhone;
+}
+function goToOrder(){ showScreen('order-screen'); buildTimeSlots(); }
+function goToTrackAfterSuccess(){
+  document.getElementById('track-phone').value = lastPhone;
+  showScreen('track-screen');
+  trackOrders();
+}
+
+// ══════════ بارگذاری ══════════
+async function loadMenu(){
+  document.getElementById('pay-bank').textContent  = PAYMENT_INFO.bank;
+  document.getElementById('pay-card').textContent  = PAYMENT_INFO.card;
+  document.getElementById('pay-owner').textContent = PAYMENT_INFO.owner;
+  document.getElementById('main-header').style.display = 'block';
+  startClock();
+
+  // اگر خارج از ساعت کاری — صفحه بسته نشون بده
+  if(!isShopOpen()){
+    showScreen('closed-screen');
+    return;
+  }
+
+  // بارگذاری تنظیمات آنلاین (وضعیت + ساعت کاری)
+  try{
+    const cfgRes = await supaFetch('/rest/v1/settings?key=in.(online_orders_enabled,shop_open_hour,shop_close_hour)&select=key,value');
+    if(cfgRes.ok){
+      const cfgData = await cfgRes.json();
+      if(Array.isArray(cfgData)){
+        let paused = false;
+        cfgData.forEach(r=>{
+          if(r.key==='online_orders_enabled' && r.value==='false') paused = true;
+          if(r.key==='shop_open_hour')  OPEN_HOUR  = parseInt(r.value)||20;
+          if(r.key==='shop_close_hour') CLOSE_HOUR = parseInt(r.value)||22;
+        });
+        if(paused){ showScreen('paused-screen'); return; }
+      }
+    }
+  } catch(e){ /* در صورت خطا با مقادیر پیش‌فرض ادامه می‌دهیم */ }
+
+  let res;
   try{
     res = await supaFetch('/rest/v1/menu?select=*&order=sort_order.asc');
   } catch(e){
-    document.getElementById('empty-state-msg').innerHTML = 'اتصال به اینترنت برقرار نشد.<div class="hint">'+e.message+'</div>';
+    document.getElementById('empty-state-msg').innerHTML = 'اتصال به اینترنت برقرار نشد.<br><small>'+e.message+'</small>';
     showScreen('empty-state');
     return;
   }
   if(!res.ok){
-    let msg='خطا در دریافت منو ('+res.status+')';
+    let msg = 'خطا در دریافت منو ('+res.status+')';
     if(res.status===401||res.status===403) msg='دسترسی به جدول منو مجاز نیست (RLS).';
     document.getElementById('empty-state-msg').textContent = msg;
     showScreen('empty-state');
@@ -383,15 +614,13 @@ async function loadMenu(){
   }
   const allRows = await res.json();
   menu = (Array.isArray(allRows)?allRows:[]).filter(m=>Number(m.price)>0);
-
   if(!menu.length){
     document.getElementById('empty-state-msg').textContent = 'منو در حال حاضر خالی است.';
     showScreen('empty-state');
     return;
   }
-  document.getElementById('main-header').style.display='block';
-  showScreen('landing-screen');
   renderMenu();
+  showScreen('landing-screen');
 }
 
 // ══════════ رندر منو ══════════
@@ -400,9 +629,9 @@ function renderMenu(){
   el.innerHTML = menu.map(m=>{
     const q = qtyMap[m.id]||0;
     const sauces = sauceMap[m.id]||[];
-    const sauceHtml = q > 0 ? `
+    const sauceHtml = q>0 ? `
       <div class="sauce-row visible">
-        <span class="sauce-label">سس برای «${m.name}»:</span>
+        <span class="sauce-label-txt">سس برای «${m.name}»:</span>
         <div class="sauce-chips">
           ${SAUCES.map(s=>`<span class="sauce-chip ${sauces.includes(s)?'active':''}" onclick="toggleSauce('${m.id}','${s}')">${s}</span>`).join('')}
         </div>
@@ -427,54 +656,47 @@ function renderMenu(){
 }
 
 function changeQty(id, delta){
-  qtyMap[id] = Math.max(0, (qtyMap[id]||0)+delta);
-  if(!qtyMap[id]) delete sauceMap[id]; // اگر ۰ شد سس‌ها پاک بشه
+  qtyMap[id] = Math.max(0,(qtyMap[id]||0)+delta);
+  if(!qtyMap[id]) delete sauceMap[id];
   renderMenu();
 }
-
 function toggleSauce(itemId, sauce){
   if(!sauceMap[itemId]) sauceMap[itemId]=[];
   const idx = sauceMap[itemId].indexOf(sauce);
-  if(idx>=0) sauceMap[itemId].splice(idx,1);
-  else sauceMap[itemId].push(sauce);
+  if(idx>=0) sauceMap[itemId].splice(idx,1); else sauceMap[itemId].push(sauce);
   renderMenu();
 }
-
 function updateTotal(){
-  let subtotal = 0;
+  let subtotal=0;
   menu.forEach(m=>{ subtotal += (qtyMap[m.id]||0)*Number(m.price); });
-  const discountAmt = Math.round(subtotal * discountPct / 100);
-  const total = subtotal - discountAmt;
-
-  const subRow = document.getElementById('subtotal-row');
-  const discRow = document.getElementById('discount-row');
-  if(discountPct > 0){
+  const discountAmt = Math.round(subtotal*discountPct/100);
+  const total = subtotal-discountAmt;
+  const subRow=document.getElementById('subtotal-row');
+  const discRow=document.getElementById('discount-row');
+  if(discountPct>0){
     subRow.style.display='flex';
-    document.getElementById('subtotal-val').textContent = fmt(subtotal)+' تومان';
+    document.getElementById('subtotal-val').textContent=fmt(subtotal)+' تومان';
     discRow.style.display='flex';
-    document.getElementById('discount-label').textContent = 'تخفیف '+tp(discountPct)+'٪';
-    document.getElementById('discount-val').textContent = '−'+fmt(discountAmt)+' تومان';
+    document.getElementById('discount-label').textContent='تخفیف '+tp(discountPct)+'٪';
+    document.getElementById('discount-val').textContent='−'+fmt(discountAmt)+' تومان';
   } else {
-    subRow.style.display='none';
-    discRow.style.display='none';
+    subRow.style.display='none'; discRow.style.display='none';
   }
-  document.getElementById('order-total').textContent = fmt(total)+' تومان';
-  return { subtotal, discountAmt, total };
+  document.getElementById('order-total').textContent=fmt(total)+' تومان';
+  return {subtotal,discountAmt,total};
 }
 
 // ══════════ کد تخفیف ══════════
 function applyDiscount(){
-  const code = (document.getElementById('discount-code').value||'').trim().toUpperCase();
-  const errEl = document.getElementById('discount-err');
-  errEl.textContent='';
-  if(!code){ errEl.textContent='کد تخفیف را وارد کنید'; return; }
-  const pct = DISCOUNT_CODES[code];
-  if(!pct){ errEl.textContent='کد تخفیف معتبر نیست'; return; }
-  discountPct = pct;
-  discountCode = code;
+  const code=(document.getElementById('discount-code').value||'').trim().toUpperCase();
+  const errEl=document.getElementById('discount-err'); errEl.textContent='';
+  if(!code){errEl.textContent='کد تخفیف رو وارد کن';return;}
+  const pct=DISCOUNT_CODES[code];
+  if(!pct){errEl.textContent='کد تخفیف معتبر نیست';return;}
+  discountPct=pct; discountCode=code;
   document.getElementById('discount-input-wrap').style.display='none';
   document.getElementById('discount-applied-wrap').style.display='block';
-  document.getElementById('discount-applied-txt').textContent = tp(pct)+'٪ تخفیف';
+  document.getElementById('discount-applied-txt').textContent=tp(pct)+'٪ تخفیف';
   updateTotal();
 }
 function removeDiscount(){
@@ -489,45 +711,39 @@ function removeDiscount(){
 function setDelivery(type){
   deliveryType=type;
   const bp=document.getElementById('btn-pickup'), bd=document.getElementById('btn-delivery');
-  const active=type==='pickup'?bp:bd, inactive=type==='pickup'?bd:bp;
-  active.style.borderColor='var(--pink)'; active.style.background='rgba(236,72,153,.15)';
-  active.style.color='var(--pink-light)'; active.style.fontWeight='700';
-  inactive.style.borderColor='var(--border)'; inactive.style.background='var(--bg3)';
-  inactive.style.color='var(--text3)'; inactive.style.fontWeight='600';
+  const a=type==='pickup'?bp:bd, i=type==='pickup'?bd:bp;
+  a.style.borderColor='var(--pink)';a.style.background='rgba(236,72,153,.15)';a.style.color='var(--pink-light)';a.style.fontWeight='700';
+  i.style.borderColor='var(--border)';i.style.background='var(--bg3)';i.style.color='var(--text3)';i.style.fontWeight='600';
   document.getElementById('delivery-notice').style.display=type==='delivery'?'block':'none';
   document.getElementById('address-wrap').style.display=type==='delivery'?'block':'none';
 }
 
 // ══════════ زمان تحویل ══════════
 function buildTimeSlots(){
-  const now = new Date();
-  const earliest = new Date(now.getTime()+40*60000);
-  const hE = earliest.getHours(), mE = earliest.getMinutes();
-  // نمایش زودترین زمان
-  document.getElementById('earliest-time').textContent =
+  const now=new Date();
+  const earliest=new Date(now.getTime()+40*60000);
+  const hE=earliest.getHours(), mE=earliest.getMinutes();
+  document.getElementById('earliest-time').textContent=
     tp(String(hE).padStart(2,'0'))+':'+tp(String(Math.ceil(mE/5)*5).padStart(2,'0'));
 
-  // ساخت اسلات‌ها از ساعت جاری تا ۲۳:۰۰ با فاصله ۳۰ دق
-  const slots=[];
-  let h=earliest.getHours(), m=Math.ceil(earliest.getMinutes()/30)*30;
+  let h=hE, m=Math.ceil(mE/30)*30;
   if(m>=60){h++;m=0;}
-  while(h<24){
+  const slots=[];
+  // اسلات‌ها تا آخر ساعت کاری (۲۲:۰۰)
+  while(h<CLOSE_HOUR||(h===CLOSE_HOUR&&m===0)){
     slots.push({h,m});
-    m+=30;
-    if(m>=60){h++;m=0;}
+    m+=30; if(m>=60){h++;m=0;}
   }
-  const cont = document.getElementById('time-slots');
-  cont.innerHTML = slots.slice(0,8).map(s=>{
-    const label = tp(String(s.h).padStart(2,'0'))+':'+tp(String(s.m).padStart(2,'0'));
-    const val = String(s.h).padStart(2,'0')+':'+String(s.m).padStart(2,'0');
-    return `<button type="button" class="time-slot" data-val="${val}" onclick="selectTimeSlot(this,'${val}')">${label}</button>`;
-  }).join('') + `<button type="button" class="time-slot" onclick="selectCustomTime()">ساعت دیگر...</button>`;
+  const cont=document.getElementById('time-slots');
+  cont.innerHTML=slots.map(s=>{
+    const lbl=tp(String(s.h).padStart(2,'0'))+':'+tp(String(s.m).padStart(2,'0'));
+    const val=String(s.h).padStart(2,'0')+':'+String(s.m).padStart(2,'0');
+    return `<button type="button" class="time-slot" data-val="${val}" onclick="selectTimeSlot(this,'${val}')">${lbl}</button>`;
+  }).join('')+(slots.length<8?`<button type="button" class="time-slot" onclick="selectCustomTime()">ساعت دیگر...</button>`:'');
 }
-
-function selectTimeSlot(btn, val){
+function selectTimeSlot(btn,val){
   document.querySelectorAll('.time-slot').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  selectedTime = val;
+  btn.classList.add('active'); selectedTime=val;
   document.getElementById('custom-time-wrap').classList.remove('visible');
   document.getElementById('time-err').textContent='';
 }
@@ -536,128 +752,197 @@ function selectCustomTime(){
   document.getElementById('custom-time-wrap').classList.add('visible');
   selectedTime=null;
 }
-
 function getSelectedTime(){
-  const custom = (document.getElementById('custom-time').value||'').trim();
-  if(custom) return custom;
-  return selectedTime;
+  const custom=(document.getElementById('custom-time').value||'').trim();
+  return custom||selectedTime;
+}
+
+// ══════════ ذخیره پیش‌نویس (مرحله ۱) ══════════
+async function saveDraft(){
+  const errEl=document.getElementById('form-error'); errEl.textContent='';
+
+  // بررسی فعال بودن پذیرش سفارش آنلاین
+  try{
+    const cfg=await supaFetch('/rest/v1/settings?key=eq.online_orders_enabled&select=value');
+    const cfgData=cfg.ok?await cfg.json():[];
+    const isEnabled=!Array.isArray(cfgData)||!cfgData.length||cfgData[0].value!=='false';
+    if(!isEnabled){ errEl.textContent='⛔ در حال حاضر سفارش‌گیری آنلاین موقتاً متوقف شده است.'; return; }
+  } catch(e){}
+
+  const name=(document.getElementById('cust-name').value||'').trim();
+  const phone=normalizePhone(document.getElementById('cust-phone').value);
+  const note=(document.getElementById('order-note').value||'').trim();
+  const address=(document.getElementById('cust-address').value||'').trim();
+  const time=getSelectedTime();
+
+  // اعتبارسنجی
+  if(!phone||phone.length<10){errEl.textContent='لطفاً شماره موبایل معتبر وارد کنید';return;}
+  const items=menu.filter(m=>(qtyMap[m.id]||0)>0).map(m=>({
+    itemId:m.id,name:m.name,qty:qtyMap[m.id],unitPrice:Number(m.price),sauces:sauceMap[m.id]||[]
+  }));
+  if(!items.length){errEl.textContent='حداقل یک غذا از منو انتخاب کنید';return;}
+  if(deliveryType==='delivery'&&!address){errEl.textContent='آدرس را برای تحویل درب منزل وارد کنید';return;}
+  if(!time){errEl.textContent='لطفاً ساعت تحویل را انتخاب کنید';return;}
+  // بررسی حداقل ۴۰ دقیقه
+  const [hh,mm]=time.split(':').map(Number);
+  const earliest40=new Date(new Date().getTime()+38*60000);
+  const selTime=new Date(); selTime.setHours(hh,mm,0,0);
+  if(selTime<earliest40){errEl.textContent='زودترین زمان ممکن ۴۰ دقیقه دیگر است';return;}
+
+  const btn=document.getElementById('draft-btn');
+  btn.disabled=true; btn.textContent='در حال ذخیره...';
+
+  try{
+    const {subtotal,discountAmt,total}=updateTotal();
+    const body={
+      customer_name:name||null,
+      customer_phone:phone,
+      items,total,subtotal,
+      discount_code:discountCode||null,
+      discount_pct:discountPct||null,
+      discount_amt:discountAmt||null,
+      note:note||null,
+      delivery_type:deliveryType,
+      address:deliveryType==='delivery'?address:null,
+      delivery_time:time,
+      status:'draft'
+    };
+
+    // اگر قبلاً draft داشتیم آپدیت کن، وگرنه insert
+    let res;
+    if(currentDraftId){
+      res=await supaFetch('/rest/v1/online_orders?id=eq.'+currentDraftId,{
+        method:'PATCH',
+        headers:{'Content-Type':'application/json','Prefer':'return=representation'},
+        body:JSON.stringify(body)
+      });
+    } else {
+      res=await supaFetch('/rest/v1/online_orders',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Prefer':'return=representation'},
+        body:JSON.stringify(body)
+      });
+    }
+    if(!res.ok) throw new Error('server '+res.status+': '+(await res.text().catch(()=>'')));
+    const data=await res.json();
+    const saved=Array.isArray(data)?data[0]:data;
+    currentDraftId=saved?.id;
+    lastPhone=phone;
+
+    // نمایش خلاصه در صفحه پرداخت
+    showPaymentScreen(saved, items, {subtotal,discountAmt,total,discountCode,discountPct,time,deliveryType,address,name,phone});
+  } catch(e){
+    console.error(e);
+    errEl.textContent='خطا در ذخیره. اتصال اینترنت رو بررسی کن.';
+    btn.disabled=false; btn.textContent='ثبت سفارش و رفتن به پرداخت ←';
+  }
+}
+
+// ══════════ نمایش صفحه پرداخت ══════════
+function showPaymentScreen(order, items, meta){
+  // خلاصه سفارش
+  const deliveryLabel=meta.deliveryType==='delivery'?'🛵 تحویل درب منزل':'🏪 تحویل حضوری';
+  const itemsHtml=items.map(i=>{
+    const sc=i.sauces&&i.sauces.length?' <span style="font-size:11px;color:var(--text3);">('+i.sauces.join('، ')+')</span>':'';
+    return `<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:13px;">
+      <span>× ${tp(i.qty)} ${i.name}${sc}</span>
+      <span style="color:var(--text3);">${fmt(i.qty*i.unitPrice)} تومان</span>
+    </div>`;
+  }).join('');
+  let priceHtml=`<div style="border-top:1px solid var(--border);margin-top:8px;padding-top:8px;">`;
+  if(meta.discountPct>0){
+    priceHtml+=`<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text3);margin-bottom:4px;"><span>جمع</span><span>${fmt(meta.subtotal)} تومان</span></div>`;
+    priceHtml+=`<div style="display:flex;justify-content:space-between;font-size:12px;color:var(--green);margin-bottom:4px;"><span>تخفیف ${tp(meta.discountPct)}٪</span><span>−${fmt(meta.discountAmt)} تومان</span></div>`;
+  }
+  priceHtml+=`<div style="display:flex;justify-content:space-between;font-size:15px;font-weight:700;"><span>مبلغ نهایی</span><span style="color:var(--pink-light);">${fmt(meta.total)} تومان</span></div></div>`;
+
+  document.getElementById('payment-summary').innerHTML=`
+    ${itemsHtml}
+    ${priceHtml}
+    <div style="margin-top:10px;font-size:12px;color:var(--text3);line-height:2;">
+      ${meta.name?'👤 '+meta.name+'<br>':''}
+      📱 ${meta.phone}<br>
+      ${deliveryLabel}<br>
+      ⏰ ساعت تحویل: ${tp(meta.time)}
+      ${meta.address?'<br>📍 '+meta.address:''}
+    </div>`;
+
+  // ریست فیش
+  document.getElementById('receipt-text').value='';
+  document.getElementById('file-drop-text').textContent='برای انتخاب عکس فیش ضربه بزنید';
+  document.getElementById('file-drop').classList.remove('has-file');
+  document.getElementById('receipt-preview').style.display='none';
+  selectedFile=null;
+
+  showScreen('payment-screen');
 }
 
 // ══════════ آپلود فیش ══════════
 function onFileSelected(e){
   const file=e.target.files[0];
-  const drop=document.getElementById('file-drop');
-  const preview=document.getElementById('receipt-preview');
-  if(!file){selectedFile=null;drop.classList.remove('has-file');preview.style.display='none';return;}
+  if(!file){selectedFile=null;document.getElementById('file-drop').classList.remove('has-file');document.getElementById('receipt-preview').style.display='none';return;}
   selectedFile=file;
-  drop.classList.add('has-file');
+  document.getElementById('file-drop').classList.add('has-file');
   document.getElementById('file-drop-text').textContent='✓ '+file.name;
-  const reader=new FileReader();
-  reader.onload=ev=>{preview.src=ev.target.result;preview.style.display='block';};
-  reader.readAsDataURL(file);
+  const r=new FileReader();
+  r.onload=ev=>{const p=document.getElementById('receipt-preview');p.src=ev.target.result;p.style.display='block';};
+  r.readAsDataURL(file);
 }
 async function uploadReceiptImage(file){
   const ext=(file.name.split('.').pop()||'jpg').toLowerCase();
   const path=Date.now()+'_'+Math.random().toString(36).slice(2,8)+'.'+ext;
   const res=await supaFetch('/storage/v1/object/receipts/'+path,{
-    method:'POST',
-    headers:{'Content-Type':file.type||'image/jpeg'},
-    body:file
+    method:'POST',headers:{'Content-Type':file.type||'image/jpeg'},body:file
   });
   if(!res.ok) throw new Error('upload failed: '+res.status);
   return SUPA_URL+'/storage/v1/object/public/receipts/'+path;
 }
 
-// ══════════ ثبت سفارش ══════════
-async function submitOnlineOrder(){
-  const errEl=document.getElementById('form-error');
-  errEl.textContent='';
-
-  const name=(document.getElementById('cust-name').value||'').trim();
-  const phone=normalizePhone(document.getElementById('cust-phone').value);
-  const note=(document.getElementById('order-note').value||'').trim();
+// ══════════ تأیید نهایی (مرحله ۲) ══════════
+async function finalizeOrder(){
+  const errEl=document.getElementById('payment-error'); errEl.textContent='';
   const receiptText=(document.getElementById('receipt-text').value||'').trim();
-  const address=(document.getElementById('cust-address').value||'').trim();
-  const time=getSelectedTime();
-
-  const items=menu.filter(m=>(qtyMap[m.id]||0)>0).map(m=>({
-    itemId:m.id, name:m.name, qty:qtyMap[m.id], unitPrice:Number(m.price),
-    sauces: sauceMap[m.id]||[]
-  }));
-
-  if(!phone||phone.length<10){errEl.textContent='لطفاً شماره موبایل معتبر وارد کنید';return;}
-  if(!items.length){errEl.textContent='حداقل یک غذا از منو انتخاب کنید';return;}
-  if(deliveryType==='delivery'&&!address){errEl.textContent='برای تحویل درب منزل، آدرس کامل وارد کنید';return;}
-  if(!time){errEl.textContent='لطفاً ساعت تحویل را انتخاب کنید';return;}
-  // بررسی حداقل ۴۰ دق
-  if(time){
-    const [hh,mm]=time.split(':').map(Number);
-    const now=new Date(); const earliest=new Date(now.getTime()+38*60000);
-    const sel=new Date(); sel.setHours(hh,mm,0,0);
-    if(sel<earliest){
-      errEl.textContent='زودترین زمان ممکن ۴۰ دقیقه دیگر است';return;
-    }
-  }
   if(!receiptText&&!selectedFile){errEl.textContent='حداقل متن یا عکس فیش واریزی رو وارد کن';return;}
+  if(!currentDraftId){errEl.textContent='خطا: سفارش پیدا نشد. دوباره از ابتدا ثبت کن.';return;}
 
-  const submitBtn=document.getElementById('submit-btn');
-  submitBtn.disabled=true; submitBtn.textContent='در حال ثبت...';
+  const btn=document.getElementById('pay-btn');
+  btn.disabled=true; btn.textContent='در حال ثبت نهایی...';
 
   try{
     let imageUrl=null;
     if(selectedFile) imageUrl=await uploadReceiptImage(selectedFile);
-    const {total, discountAmt, subtotal}=updateTotal();
 
-    const body={
-      customer_name: name||null,
-      customer_phone: phone,
-      items: items,
-      total: total,
-      subtotal: subtotal,
-      discount_code: discountCode||null,
-      discount_pct: discountPct||null,
-      discount_amt: discountAmt||null,
-      receipt_text: receiptText||null,
-      receipt_image_url: imageUrl,
-      note: note||null,
-      delivery_type: deliveryType,
-      address: deliveryType==='delivery'?address:null,
-      delivery_time: time,
-      status:'pending'
-    };
-
-    const res=await supaFetch('/rest/v1/online_orders',{
-      method:'POST',
+    const res=await supaFetch('/rest/v1/online_orders?id=eq.'+currentDraftId,{
+      method:'PATCH',
       headers:{'Content-Type':'application/json','Prefer':'return=representation'},
-      body:JSON.stringify(body)
+      body:JSON.stringify({
+        status:'pending',
+        receipt_text:receiptText||null,
+        receipt_image_url:imageUrl
+      })
     });
-    if(!res.ok){
-      const t=await res.text().catch(()=>'');
-      throw new Error('server error '+res.status+' '+t);
-    }
+    if(!res.ok) throw new Error('server '+(await res.text().catch(()=>'')));
     const data=await res.json();
-    const newOrder=Array.isArray(data)?data[0]:data;
-    lastPhone=phone;
-    lastOrderNum=newOrder?.order_number||newOrder?.id||'';
+    const saved=Array.isArray(data)?data[0]:data;
 
-    // صفحه موفقیت
-    document.getElementById('success-order-num').textContent = lastOrderNum ? tp(String(lastOrderNum)) : '—';
-    document.getElementById('success-order-time').textContent = 'ساعت تحویل: '+tp(time)+'  |  '+phone;
+    document.getElementById('success-order-num').textContent=saved?.order_number?tp(String(saved.order_number)):'—';
+    document.getElementById('success-order-info').textContent='📱 '+lastPhone;
     showScreen('success-screen');
     document.getElementById('success-screen').style.display='flex';
+    currentDraftId=null;
   } catch(e){
     console.error(e);
-    errEl.textContent='خطا در ثبت سفارش. اتصال اینترنت رو بررسی کن و دوباره امتحان کن.';
-    submitBtn.disabled=false; submitBtn.textContent='ثبت سفارش';
+    errEl.textContent='خطا در ثبت نهایی. دوباره امتحان کن.';
+    btn.disabled=false; btn.textContent='✅ تأیید نهایی و ثبت سفارش';
   }
 }
 
-// ══════════ پیگیری سفارش ══════════
+// ══════════ پیگیری / ادامه خرید ══════════
 async function trackOrders(){
   const phone=normalizePhone(document.getElementById('track-phone').value);
-  const errEl=document.getElementById('track-err');
-  errEl.textContent='';
+  const errEl=document.getElementById('track-err'); errEl.textContent='';
   if(!phone||phone.length<10){errEl.textContent='شماره موبایل معتبر وارد کنید';return;}
+  lastPhone=phone;
 
   const btn=document.getElementById('track-btn');
   btn.disabled=true; btn.textContent='در حال جستجو...';
@@ -673,79 +958,114 @@ async function trackOrders(){
 
     if(!orders.length){
       document.getElementById('track-results').innerHTML=`
-        <div class="card" style="margin-top:14px;text-align:center;color:var(--text3);font-size:13px;padding:24px;">
+        <div class="card" style="margin-top:14px;text-align:center;color:var(--text3);font-size:13px;padding:24px 16px;">
           هیچ سفارشی با این شماره یافت نشد.
         </div>`;
       return;
     }
-
     document.getElementById('track-results').innerHTML = orders.map(o=>renderOrderCard(o)).join('');
   } catch(e){
-    errEl.textContent='خطا در دریافت اطلاعات. دوباره امتحان کن.';
+    errEl.textContent='خطا در جستجو. دوباره امتحان کن.';
   } finally{
-    btn.disabled=false; btn.textContent='جستجو';
+    btn.disabled=false; btn.textContent='جستجوی سفارش';
   }
 }
 
 function renderOrderCard(o){
   const statusMap={
-    pending:{label:'در انتظار تأیید',cls:'status-pending',icon:'⏳',steps:[1,0,0,0]},
-    confirmed:{label:'تأیید شد',cls:'status-confirmed',icon:'✅',steps:[1,1,0,0]},
-    preparing:{label:'در حال آماده‌سازی',cls:'status-confirmed',icon:'👨‍🍳',steps:[1,1,1,0]},
-    ready:{label:'آماده تحویل',cls:'status-ready',icon:'🎉',steps:[1,1,1,1]},
-    rejected:{label:'رد شد',cls:'status-rejected',icon:'❌',steps:[1,0,0,0]}
+    draft:   {label:'پیش‌نویس — پرداخت نشده',cls:'status-draft',   icon:'📝',steps:[1,0,0,0]},
+    pending: {label:'در انتظار تأیید',         cls:'status-pending', icon:'⏳',steps:[1,1,0,0]},
+    confirmed:{label:'تأیید شد',               cls:'status-confirmed',icon:'✅',steps:[1,1,1,0]},
+    preparing:{label:'در حال آماده‌سازی',      cls:'status-preparing',icon:'👨‍🍳',steps:[1,1,1,0]},
+    ready:   {label:'آماده تحویل',             cls:'status-ready',   icon:'🎉',steps:[1,1,1,1]},
+    rejected:{label:'رد شد',                   cls:'status-rejected',icon:'❌',steps:[1,0,0,0]}
   };
   const st=statusMap[o.status]||statusMap.pending;
   const items=Array.isArray(o.items)?o.items:[];
-  const itemsHtml=items.map(i=>{
-    const sauceTxt=i.sauces&&i.sauces.length?' <span style="font-size:11px;color:var(--text3);">('+i.sauces.join('، ')+')</span>':'';
-    return `<div>× ${tp(i.qty)} ${i.name}${sauceTxt}</div>`;
-  }).join('');
   const date=o.created_at?new Date(o.created_at).toLocaleDateString('fa-IR'):'—';
-  const deliveryLabel=o.delivery_type==='delivery'?'🛵 تحویل درب منزل':'🏪 تحویل حضوری';
-  const timeLabel=o.delivery_time?'⏰ ساعت '+tp(o.delivery_time):'';
-  const stepNames=['ثبت','تأیید','آماده‌سازی','تحویل'];
+  const deliveryLabel=o.delivery_type==='delivery'?'🛵 درب منزل':'🏪 حضوری';
+  const stepNames=['ثبت','پرداخت','تأیید','تحویل'];
   const stepsHtml=st.steps.map((done,i)=>`
     <div class="step ${done?'done':''}">
       <div class="step-dot">${done?'✓':(i+1)}</div>
       <div class="step-label">${stepNames[i]}</div>
     </div>`).join('');
+  const itemsHtml=items.map(i=>{
+    const sc=i.sauces&&i.sauces.length?' <span style="font-size:11px;color:var(--text3);">('+i.sauces.join('، ')+')</span>':'';
+    return `<div style="font-size:13px;line-height:2;">× ${tp(i.qty)} ${i.name}${sc}</div>`;
+  }).join('');
+  const discountHtml=o.discount_pct?`<div style="font-size:12px;color:var(--green);margin-top:4px;">🎟️ تخفیف ${tp(o.discount_pct)}٪ — ${fmt(o.discount_amt)} تومان کسر شد</div>`:'';
 
-  const discountHtml=o.discount_pct?`<div style="font-size:12px;color:var(--green);margin-top:4px;">🎟️ تخفیف ${tp(o.discount_pct)}٪ اعمال شد</div>`:'';
+  // دکمه ادامه خرید برای draft
+  const continueBtn = (o.status==='draft' && isShopOpen())
+    ? `<button class="btn-primary" style="margin-top:14px;padding:12px;" onclick="resumeDraft('${o.id}')">💳 ادامه خرید و پرداخت ←</button>`
+    : (o.status==='draft'
+        ? `<div class="alert-warning" style="margin-top:12px;">⏰ پرداخت فقط بین ساعت ${tp(OPEN_HOUR)}:۰۰ تا ${tp(CLOSE_HOUR)}:۰۰ ممکن است.</div>`
+        : '');
 
   return `
   <div class="track-order-card">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
       <div>
-        <div class="track-order-num">${o.order_number?'سفارش #'+tp(o.order_number):''}</div>
-        <div class="track-order-sub">${date} — ${deliveryLabel}${timeLabel?'<br>'+timeLabel:''}</div>
+        ${o.order_number?`<div class="track-order-num">سفارش #${tp(o.order_number)}</div>`:''}
+        <div style="font-size:11px;color:var(--text3);margin-bottom:8px;">${date} — ${deliveryLabel}${o.delivery_time?' — ⏰ '+tp(o.delivery_time):''}</div>
       </div>
-      <div class="status-badge ${st.cls}">${st.icon} ${st.label}</div>
+      <div class="status-badge ${st.cls}" style="white-space:nowrap;">${st.icon} ${st.label}</div>
     </div>
     ${o.status!=='rejected'?`<div class="step-bar">${stepsHtml}</div>`:''}
     <hr class="track-divider">
-    <div class="track-items">${itemsHtml||'—'}</div>
+    ${itemsHtml||'—'}
     ${discountHtml}
     <hr class="track-divider">
     <div style="display:flex;justify-content:space-between;font-size:14px;font-weight:700;">
       <span style="color:var(--text3);">مبلغ کل</span>
       <span style="color:var(--pink-light);">${fmt(o.total)} تومان</span>
     </div>
-    ${o.note?`<div style="font-size:12px;color:var(--text3);margin-top:8px;">📝 ${o.note}</div>`:''}
-    ${o.address?`<div style="font-size:12px;color:var(--text3);margin-top:6px;">📍 ${o.address}</div>`:''}
+    ${o.note?`<div style="font-size:12px;color:var(--text3);margin-top:6px;">📝 ${o.note}</div>`:''}
+    ${o.address?`<div style="font-size:12px;color:var(--text3);margin-top:4px;">📍 ${o.address}</div>`:''}
+    ${continueBtn}
   </div>`;
 }
 
-// ══════════ کپی شماره کارت ══════════
+// ══════════ بازگشت به پرداخت از پیگیری ══════════
+async function resumeDraft(orderId){
+  // واکشی سفارش
+  try{
+    const res=await supaFetch('/rest/v1/online_orders?id=eq.'+orderId,{headers:{'Accept':'application/json'}});
+    if(!res.ok) throw new Error();
+    const data=await res.json();
+    const o=Array.isArray(data)?data[0]:data;
+    if(!o) throw new Error();
+    currentDraftId=o.id;
+    lastPhone=o.customer_phone||lastPhone;
+    const items=Array.isArray(o.items)?o.items:[];
+    const meta={
+      subtotal:o.subtotal||o.total,
+      discountAmt:o.discount_amt||0,
+      total:o.total,
+      discountCode:o.discount_code||'',
+      discountPct:o.discount_pct||0,
+      time:o.delivery_time||'',
+      deliveryType:o.delivery_type||'pickup',
+      address:o.address||'',
+      name:o.customer_name||'',
+      phone:o.customer_phone||''
+    };
+    showPaymentScreen(o, items, meta);
+  } catch(e){
+    alert('خطا در بارگذاری سفارش. دوباره امتحان کن.');
+  }
+}
+
+// ══════════ کپی کارت ══════════
 function copyCard(){
   navigator.clipboard.writeText(PAYMENT_INFO.card.replace(/-/g,''));
-  const btn=event.target;
-  const old=btn.textContent;
+  const btn=event.target, old=btn.textContent;
   btn.textContent='کپی شد ✓';
   setTimeout(()=>btn.textContent=old,1500);
 }
 
-// ══════════ اجرا ══════════
+// ══════════ شروع ══════════
 loadMenu();
 </script>
 </body>
