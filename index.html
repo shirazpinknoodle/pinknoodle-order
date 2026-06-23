@@ -574,28 +574,34 @@ async function loadMenu(){
   document.getElementById('main-header').style.display = 'block';
   startClock();
 
-  // ابتدا ساعت کاری و وضعیت را از Supabase بخوان، سپس چک کن
+  // بارگذاری تنظیمات از Supabase (ساعت کاری + وضعیت)
+  // اگر خطا گرفت با مقادیر پیش‌فرض ادامه می‌دهد
+  let shopPaused = false;
   try{
-    const cfgRes = await supaFetch('/rest/v1/settings?key=in.(online_orders_enabled,shop_open_hour,shop_close_hour)&select=key,value');
-    if(cfgRes.ok){
+    const cfgRes = await Promise.race([
+      supaFetch('/rest/v1/settings?key=in.(online_orders_enabled,shop_open_hour,shop_close_hour)&select=key,value'),
+      new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),5000))
+    ]);
+    if(cfgRes && cfgRes.ok){
       const cfgData = await cfgRes.json();
       if(Array.isArray(cfgData)){
-        let paused = false;
         cfgData.forEach(r=>{
-          if(r.key==='online_orders_enabled' && r.value==='false') paused = true;
-          if(r.key==='shop_open_hour')  OPEN_HOUR  = parseInt(r.value)||20;
-          if(r.key==='shop_close_hour') CLOSE_HOUR = parseInt(r.value)||22;
+          if(r.key==='online_orders_enabled' && r.value==='false') shopPaused = true;
+          if(r.key==='shop_open_hour')  OPEN_HOUR  = parseInt(r.value)||OPEN_HOUR;
+          if(r.key==='shop_close_hour') CLOSE_HOUR = parseInt(r.value)||CLOSE_HOUR;
         });
-        if(paused){ showScreen('paused-screen'); return; }
       }
     }
-  } catch(e){ /* در صورت خطا با مقادیر پیش‌فرض ادامه می‌دهیم */ }
+  } catch(e){ /* timeout یا خطای شبکه — با مقادیر پیش‌فرض ادامه */ }
 
-  // آپدیت ساعت در متن صفحات (قبل از نمایش هر صفحه)
+  // آپدیت ساعت در متن صفحات
   ['closed-open-hour','landing-open-hour'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent=toPersianDigits(OPEN_HOUR); });
   ['closed-close-hour','landing-close-hour'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent=toPersianDigits(CLOSE_HOUR); });
 
-  // حالا با ساعت واقعی چک کن
+  // بررسی توقف سفارش‌گیری
+  if(shopPaused){ showScreen('paused-screen'); return; }
+
+  // بررسی ساعت کاری
   if(!isShopOpen()){
     showScreen('closed-screen');
     return;
