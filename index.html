@@ -574,13 +574,7 @@ async function loadMenu(){
   document.getElementById('main-header').style.display = 'block';
   startClock();
 
-  // اگر خارج از ساعت کاری — صفحه بسته نشون بده
-  if(!isShopOpen()){
-    showScreen('closed-screen');
-    return;
-  }
-
-  // بارگذاری تنظیمات آنلاین (وضعیت + ساعت کاری)
+  // ابتدا ساعت کاری و وضعیت را از Supabase بخوان، سپس چک کن
   try{
     const cfgRes = await supaFetch('/rest/v1/settings?key=in.(online_orders_enabled,shop_open_hour,shop_close_hour)&select=key,value');
     if(cfgRes.ok){
@@ -595,11 +589,17 @@ async function loadMenu(){
         if(paused){ showScreen('paused-screen'); return; }
       }
     }
-    // آپدیت ساعت در متن صفحات
-    const tp2 = h => String(h).padStart(2,'0');
-    ['closed-open-hour','landing-open-hour'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent=toPersianDigits(OPEN_HOUR); });
-    ['closed-close-hour','landing-close-hour'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent=toPersianDigits(CLOSE_HOUR); });
   } catch(e){ /* در صورت خطا با مقادیر پیش‌فرض ادامه می‌دهیم */ }
+
+  // آپدیت ساعت در متن صفحات (قبل از نمایش هر صفحه)
+  ['closed-open-hour','landing-open-hour'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent=toPersianDigits(OPEN_HOUR); });
+  ['closed-close-hour','landing-close-hour'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent=toPersianDigits(CLOSE_HOUR); });
+
+  // حالا با ساعت واقعی چک کن
+  if(!isShopOpen()){
+    showScreen('closed-screen');
+    return;
+  }
 
   let res;
   try{
