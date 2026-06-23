@@ -567,7 +567,9 @@ function goToTrackAfterSuccess(){
 }
 
 // ══════════ بارگذاری ══════════
-async function loadMenu(){
+async function loadMenu(){showScreen('empty-state');
+document.getElementById('empty-state-msg').textContent = 'سفارش‌گیری موقتاً متوقف شده است.';
+return;
   document.getElementById('pay-bank').textContent  = PAYMENT_INFO.bank;
   document.getElementById('pay-card').textContent  = PAYMENT_INFO.card;
   document.getElementById('pay-owner').textContent = PAYMENT_INFO.owner;
