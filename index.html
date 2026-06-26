@@ -37,9 +37,10 @@ body{font-family:Tahoma,sans-serif;background:var(--bg);color:var(--text);min-he
 .hint{font-size:11px;color:var(--text3);margin-top:8px;line-height:1.8;}
 .back-btn{background:none;border:none;color:var(--text3);font-size:13px;font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:4px;padding:6px 0;margin-bottom:4px;}
 .spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--pink);border-radius:50%;margin:0 auto 12px;animation:spin .8s linear infinite;}
+.spinner-sm{width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--pink);border-radius:50%;display:inline-block;animation:spin .8s linear infinite;vertical-align:middle;margin-left:6px;}
 @keyframes spin{to{transform:rotate(360deg);}}
 
-/* ── صفحه بسته ── */
+/* ══ صفحه بسته ══ */
 #closed-screen{display:none;flex-direction:column;align-items:center;padding:50px 24px;text-align:center;}
 .closed-icon{font-size:52px;margin-bottom:16px;}
 .closed-title{font-size:20px;font-weight:700;margin-bottom:10px;}
@@ -47,7 +48,7 @@ body{font-family:Tahoma,sans-serif;background:var(--bg);color:var(--text);min-he
 .closed-time{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 24px;margin:18px 0;font-size:26px;font-weight:700;color:var(--pink-light);direction:ltr;letter-spacing:2px;}
 .closed-track-btn{margin-top:6px;width:100%;max-width:300px;padding:13px;background:rgba(236,72,153,.12);border:1.5px solid rgba(236,72,153,.35);border-radius:var(--radius-sm);color:var(--pink-light);font-size:14px;font-family:inherit;cursor:pointer;font-weight:600;}
 
-/* ── صفحه اول ── */
+/* ══ صفحه اول ══ */
 #landing-screen{display:none;flex-direction:column;align-items:center;padding:0 16px 20px;}
 .landing-cards{display:flex;flex-direction:column;gap:12px;width:100%;margin-top:14px;}
 .landing-card{background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--radius);padding:20px 18px;cursor:pointer;display:flex;align-items:center;gap:16px;}
@@ -60,7 +61,7 @@ body{font-family:Tahoma,sans-serif;background:var(--bg);color:var(--text);min-he
 .open-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:blink 1.4s infinite;}
 @keyframes blink{0%,100%{opacity:1;}50%{opacity:.3;}}
 
-/* ── منو ── */
+/* ══ منو ══ */
 .menu-item{border-bottom:1px solid var(--border);padding:12px 0;}
 .menu-item:last-child{border-bottom:none;}
 .mi-name{font-size:14px;font-weight:600;}
@@ -83,12 +84,65 @@ body{font-family:Tahoma,sans-serif;background:var(--bg);color:var(--text);min-he
 .discount-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);border-radius:20px;padding:5px 12px;font-size:12px;color:var(--green);}
 .remove-discount{background:none;border:none;color:var(--green);cursor:pointer;font-size:14px;padding:0;line-height:1;}
 
-/* زمان */
-.time-slots{display:flex;flex-wrap:wrap;gap:8px;}
-.time-slot{padding:8px 14px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg);color:var(--text2);font-size:13px;font-family:inherit;cursor:pointer;}
-.time-slot.active{background:rgba(236,72,153,.15);border-color:var(--pink);color:var(--pink-light);font-weight:600;}
-.custom-time-wrap{margin-top:10px;display:none;}
-.custom-time-wrap.visible{display:block;}
+/* ══ اسلات‌های زمان‌بندی ══ */
+.slot-loading{text-align:center;padding:20px;color:var(--text3);font-size:13px;}
+.slot-legend{display:flex;gap:14px;margin-bottom:12px;flex-wrap:wrap;}
+.slot-legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text3);}
+.legend-dot{width:10px;height:10px;border-radius:3px;}
+.legend-free{background:var(--bg3);border:1px solid var(--pink);}
+.legend-taken{background:rgba(244,63,94,.15);border:1px solid rgba(244,63,94,.3);}
+.legend-selected{background:linear-gradient(135deg,#EC4899,#BE185D);}
+.legend-past{background:var(--bg);border:1px solid var(--border);}
+
+.slots-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
+.slot-btn{
+  padding:8px 4px;
+  border-radius:8px;
+  border:1px solid var(--border);
+  background:var(--bg3);
+  color:var(--text2);
+  font-size:12px;
+  font-family:inherit;
+  cursor:pointer;
+  text-align:center;
+  transition:all .15s;
+  position:relative;
+  line-height:1.3;
+}
+.slot-btn:hover:not(.slot-taken):not(.slot-past){
+  border-color:var(--pink);
+  background:rgba(236,72,153,.12);
+}
+.slot-btn.slot-selected{
+  background:linear-gradient(135deg,#EC4899,#BE185D);
+  border-color:var(--pink);
+  color:#fff;
+  font-weight:700;
+  box-shadow:0 2px 10px rgba(236,72,153,.4);
+}
+.slot-btn.slot-taken{
+  background:rgba(244,63,94,.08);
+  border-color:rgba(244,63,94,.25);
+  color:var(--red);
+  cursor:not-allowed;
+  opacity:.75;
+}
+.slot-btn.slot-past{
+  background:var(--bg);
+  border-color:var(--border);
+  color:var(--text3);
+  cursor:not-allowed;
+  opacity:.45;
+}
+.slot-time{font-size:12px;font-weight:600;}
+.slot-status{font-size:10px;margin-top:2px;}
+.slot-taken .slot-status{color:var(--red);}
+.slot-selected .slot-status{color:rgba(255,255,255,.85);}
+.slot-free .slot-status{color:var(--text3);}
+
+.slot-refresh{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text3);margin-top:10px;cursor:pointer;background:none;border:none;font-family:inherit;padding:0;}
+.slot-refresh:hover{color:var(--pink-light);}
+.last-refresh-txt{font-size:10px;color:var(--text3);margin-top:6px;}
 
 /* خلاصه */
 .summary-row{display:flex;justify-content:space-between;font-size:13px;padding:7px 0;border-bottom:1px solid var(--border);}
@@ -177,7 +231,7 @@ body{font-family:Tahoma,sans-serif;background:var(--bg);color:var(--text);min-he
   <div class="closed-title">فروشگاه در حال حاضر بسته است</div>
   <div class="closed-sub">
     سفارش آنلاین Pink Noodle<br>
-    فقط بین ساعت ۲۰:۰۰ تا ۲۲:۰۰ فعال است.
+    فقط بین ساعت ۲۰:۱۰ تا ۲۳:۳۰ فعال است.
   </div>
   <div class="closed-time" id="closed-clock">--:--</div>
   <div class="closed-sub" style="margin-bottom:14px;">اگر قبلاً سفارش ثبت کردی و می‌خوای پرداخت کنی، از دکمه زیر وارد شو:</div>
@@ -188,7 +242,7 @@ body{font-family:Tahoma,sans-serif;background:var(--bg);color:var(--text);min-he
 <div id="landing-screen" style="display:none;flex-direction:column;align-items:center;padding:0 16px 20px;">
   <div style="width:100%;">
     <div class="alert-info" style="margin-top:16px;">
-      🕗 سفارش‌گیری آنلاین از ساعت ۲۰:۰۰ تا ۲۲:۰۰
+      🕗 سفارش‌گیری آنلاین از ساعت ۲۰:۱۰ تا ۲۳:۳۰
       <div class="open-badge" style="margin-top:6px;"><span class="open-dot"></span>الان باز هستیم</div>
     </div>
   </div>
@@ -197,7 +251,7 @@ body{font-family:Tahoma,sans-serif;background:var(--bg);color:var(--text);min-he
       <div class="landing-icon">🍜</div>
       <div>
         <div class="landing-title">ثبت سفارش جدید</div>
-        <div class="landing-desc">انتخاب از منو، انتخاب سس، کد تخفیف و تعیین ساعت تحویل</div>
+        <div class="landing-desc">انتخاب از منو، انتخاب سس، کد تخفیف و رزرو زمان تحویل</div>
       </div>
     </div>
     <div class="landing-card track-card" onclick="showTrack()">
@@ -210,23 +264,15 @@ body{font-family:Tahoma,sans-serif;background:var(--bg);color:var(--text);min-he
   </div>
 </div>
 
-<!-- ══ صفحه ۲: فرم سفارش (مرحله اول) ══ -->
+<!-- ══ صفحه ۲: فرم سفارش ══ -->
 <div id="order-screen" style="display:none;">
   <div class="section">
     <button class="back-btn" onclick="showLanding()">← بازگشت</button>
-
-    <!-- پیشرفت مرحله -->
     <div class="card" style="padding:12px 16px;">
       <div style="font-size:12px;color:var(--text3);margin-bottom:10px;">مرحله ۱ از ۲ — انتخاب سفارش</div>
       <div class="step-bar">
-        <div class="step done">
-          <div class="step-dot">۱</div>
-          <div class="step-label">انتخاب سفارش</div>
-        </div>
-        <div class="step">
-          <div class="step-dot">۲</div>
-          <div class="step-label">پرداخت</div>
-        </div>
+        <div class="step done"><div class="step-dot">۱</div><div class="step-label">انتخاب سفارش</div></div>
+        <div class="step"><div class="step-dot">۲</div><div class="step-label">پرداخت</div></div>
       </div>
     </div>
   </div>
@@ -310,19 +356,32 @@ body{font-family:Tahoma,sans-serif;background:var(--bg);color:var(--text);min-he
     </div>
   </div>
 
-  <!-- زمان تحویل -->
+  <!-- ══ زمان تحویل — اسلات‌های رزرو ══ -->
   <div class="section">
     <div class="card">
-      <div class="section-title">⏰ ساعت تحویل *</div>
+      <div class="section-title">⏰ رزرو زمان تحویل *</div>
       <div class="hint" style="margin-top:0;margin-bottom:12px;">
-        زودترین زمان: <strong id="earliest-time" style="color:var(--pink-light);"></strong>
+        هر اسلات ۳ دقیقه — ظرفیت هر اسلات: ۱ سفارش
       </div>
-      <div class="time-slots" id="time-slots"></div>
-      <div class="custom-time-wrap" id="custom-time-wrap">
-        <label class="form-label" style="margin-top:10px;">ساعت دلخواه</label>
-        <input class="form-input ltr" id="custom-time" type="time" step="300">
-        <div class="err" id="time-err"></div>
+
+      <!-- راهنمای رنگ‌ها -->
+      <div class="slot-legend">
+        <div class="slot-legend-item"><div class="legend-dot legend-free"></div><span>خالی</span></div>
+        <div class="slot-legend-item"><div class="legend-dot legend-taken"></div><span>پر شده</span></div>
+        <div class="slot-legend-item"><div class="legend-dot legend-selected"></div><span>انتخاب شما</span></div>
+        <div class="slot-legend-item"><div class="legend-dot legend-past"></div><span>گذشته</span></div>
       </div>
+
+      <div id="slots-container">
+        <div class="slot-loading"><div class="spinner-sm"></div> در حال بارگذاری اسلات‌ها...</div>
+      </div>
+
+      <button class="slot-refresh" onclick="loadSlots(true)" id="slot-refresh-btn">
+        🔄 بروزرسانی وضعیت اسلات‌ها
+      </button>
+      <div class="last-refresh-txt" id="last-refresh-txt"></div>
+
+      <div class="err" id="time-err" style="margin-top:8px;"></div>
     </div>
   </div>
 
@@ -334,7 +393,7 @@ body{font-family:Tahoma,sans-serif;background:var(--bg);color:var(--text);min-he
     </div>
   </div>
 
-  <!-- دکمه مرحله اول -->
+  <!-- دکمه -->
   <div class="section">
     <div class="card">
       <div class="alert-info" style="margin-bottom:12px;">
@@ -351,28 +410,19 @@ body{font-family:Tahoma,sans-serif;background:var(--bg);color:var(--text);min-he
   </div>
 </div>
 
-<!-- ══ صفحه ۳: پرداخت (مرحله دوم) ══ -->
+<!-- ══ صفحه ۳: پرداخت ══ -->
 <div id="payment-screen" style="display:none;">
   <div class="section">
     <button class="back-btn" id="payment-back-btn" onclick="showLanding()">← بازگشت</button>
-
-    <!-- پیشرفت -->
     <div class="card" style="padding:12px 16px;">
       <div style="font-size:12px;color:var(--text3);margin-bottom:10px;">مرحله ۲ از ۲ — پرداخت</div>
       <div class="step-bar">
-        <div class="step done">
-          <div class="step-dot">✓</div>
-          <div class="step-label">انتخاب سفارش</div>
-        </div>
-        <div class="step active">
-          <div class="step-dot">۲</div>
-          <div class="step-label">پرداخت</div>
-        </div>
+        <div class="step done"><div class="step-dot">✓</div><div class="step-label">انتخاب سفارش</div></div>
+        <div class="step active"><div class="step-dot">۲</div><div class="step-label">پرداخت</div></div>
       </div>
     </div>
   </div>
 
-  <!-- خلاصه سفارش -->
   <div class="section">
     <div class="card">
       <div class="section-title">📋 خلاصه سفارش شما</div>
@@ -380,7 +430,6 @@ body{font-family:Tahoma,sans-serif;background:var(--bg);color:var(--text);min-he
     </div>
   </div>
 
-  <!-- اطلاعات واریز -->
   <div class="section">
     <div class="card">
       <div class="section-title">💳 اطلاعات واریز</div>
@@ -394,7 +443,6 @@ body{font-family:Tahoma,sans-serif;background:var(--bg);color:var(--text);min-he
     </div>
   </div>
 
-  <!-- فیش -->
   <div class="section">
     <div class="card">
       <div class="section-title">🧾 فیش واریزی</div>
@@ -414,7 +462,6 @@ body{font-family:Tahoma,sans-serif;background:var(--bg);color:var(--text);min-he
     </div>
   </div>
 
-  <!-- تأیید نهایی -->
   <div class="section">
     <div class="card">
       <div class="err" id="payment-error"></div>
@@ -459,7 +506,7 @@ body{font-family:Tahoma,sans-serif;background:var(--bg);color:var(--text);min-he
     <div class="order-code-sub" id="success-order-info"></div>
   </div>
   <div class="success-sub" style="font-size:12px;margin-top:4px;">
-    برای پیگیری وضعیت، از صفحه اول «ادامه خرید یا پیگیری سفارش» رو انتخاب کن.
+    برای پیگیری وضعیت، از صفحه اصلی «ادامه خرید یا پیگیری سفارش» رو انتخاب کن.
   </div>
   <button class="btn-secondary" onclick="location.reload()" style="margin-top:24px;max-width:280px;">ثبت سفارش جدید</button>
   <button class="btn-secondary" onclick="goToTrackAfterSuccess()" style="margin-top:10px;max-width:280px;">🔍 پیگیری سفارش</button>
@@ -477,147 +524,303 @@ const SUPA_URL  = 'https://gbymdspqphkoedmvinwf.supabase.co';
 const SUPA_KEY  = 'sb_publishable_-NcF4pRbxXYak1gbfRftMw_bdlGDaXU';
 const PAYMENT_INFO = { bank:'بلو بانک', card:'6219-8618-7915-3624', owner:'محمد شایگان' };
 
-// ساعات باز بودن
-let OPEN_HOUR  = 20;  // پیش‌فرض — از Supabase بارگذاری می‌شود
-let CLOSE_HOUR = 22;  // پیش‌فرض — از Supabase بارگذاری می‌شود
+// ══ تنظیمات اسلات‌بندی ══
+const SLOT_START_H = 20;   // ساعت شروع
+const SLOT_START_M = 10;   // دقیقه شروع
+const SLOT_END_H   = 23;   // ساعت پایان
+const SLOT_END_M   = 30;   // دقیقه پایان
+const SLOT_MINUTES = 3;    // هر اسلات چند دقیقه
+const SLOT_CAPACITY= 1;    // ظرفیت هر اسلات (سفارش)
+const SLOT_MIN_AHEAD = 30; // حداقل دقیقه جلوتر از الان
 
-// کدهای تخفیف  {کد: درصد}
+// ساعت کاری (بارگذاری از Supabase)
+let OPEN_HOUR  = 20;
+let CLOSE_HOUR = 23;
+
 const DISCOUNT_CODES = { 'PINK10':10, 'VIP20':20, 'WELCOME15':15 };
-
-// سس‌ها
 const SAUCES = ['سس کچاپ','سس مایونز','سس تند','سس سیر','سس باربیکیو','سس خردل'];
 
 // ══════════ state ══════════
-let menu        = [];
-let qtyMap      = {};
-let sauceMap    = {};
-let deliveryType= 'pickup';
-let selectedFile= null;
-let discountPct = 0;
-let discountCode= '';
-let selectedTime= null;
-let currentDraftId = null;   // id ردیف draft در Supabase
-let lastPhone   = '';
+let menu         = [];
+let qtyMap       = {};
+let sauceMap     = {};
+let deliveryType = 'pickup';
+let selectedFile = null;
+let discountPct  = 0;
+let discountCode = '';
+let selectedTime = null;   // "HH:MM" رشته
+let currentDraftId = null;
+let lastPhone    = '';
+let takenSlots   = {};     // { "HH:MM": count } — از Supabase
+let slotAutoRefreshTimer = null;
 
 // ══════════ ابزارها ══════════
 function normalizePhone(s){
-  s = String(s||'');
-  s = s.replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d));
-  s = s.replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+  s=String(s||'');
+  s=s.replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d));
+  s=s.replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d));
   return s.replace(/[^0-9]/g,'');
 }
 function fmt(n){ return Math.round(n).toLocaleString('fa-IR'); }
 function tp(s){ return String(s).replace(/[0-9]/g,w=>String.fromCharCode(w.charCodeAt(0)+1728)); }
-function supaFetch(path, opts={}){
-  return fetch(SUPA_URL+path, {
+function supaFetch(path,opts={}){
+  return fetch(SUPA_URL+path,{
     ...opts,
-    headers:{ 'apikey':SUPA_KEY, 'Authorization':'Bearer '+SUPA_KEY, ...(opts.headers||{}) }
+    headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,...(opts.headers||{})}
   });
 }
 function isShopOpen(){
-  const h = new Date().getHours();
-  return h >= OPEN_HOUR && h < CLOSE_HOUR;
+  const now=new Date();
+  const h=now.getHours(), m=now.getMinutes();
+  const nowMin=h*60+m;
+  const openMin=SLOT_START_H*60+SLOT_START_M;
+  const closeMin=SLOT_END_H*60+SLOT_END_M;
+  return nowMin>=openMin && nowMin<closeMin;
 }
 
 // ══════════ ساعت زنده ══════════
 function startClock(){
   function tick(){
-    const now = new Date();
-    const hh = String(now.getHours()).padStart(2,'0');
-    const mm = String(now.getMinutes()).padStart(2,'0');
-    const el = document.getElementById('closed-clock');
-    if(el) el.textContent = hh+':'+mm;
+    const now=new Date();
+    const hh=String(now.getHours()).padStart(2,'0');
+    const mm=String(now.getMinutes()).padStart(2,'0');
+    const el=document.getElementById('closed-clock');
+    if(el) el.textContent=hh+':'+mm;
   }
-  tick();
-  setInterval(tick, 10000);
+  tick(); setInterval(tick,10000);
 }
 
 // ══════════ صفحه‌بندی ══════════
-const SCREENS = ['loader','closed-screen','paused-screen','landing-screen','order-screen',
-                 'payment-screen','track-screen','success-screen','empty-state'];
+const SCREENS=['loader','closed-screen','landing-screen','order-screen',
+               'payment-screen','track-screen','success-screen','empty-state'];
 function showScreen(id){
   SCREENS.forEach(s=>{
-    const el = document.getElementById(s);
-    if(!el) return;
-    el.style.display = 'none';
+    const el=document.getElementById(s);
+    if(el) el.style.display='none';
   });
-  const el = document.getElementById(id);
+  const el=document.getElementById(id);
   if(!el) return;
-  // flex screens
-  const flexScreens = ['closed-screen','paused-screen','landing-screen','success-screen'];
-  el.style.display = flexScreens.includes(id) ? 'flex' : 'block';
+  const flexScreens=['closed-screen','landing-screen','success-screen'];
+  el.style.display=flexScreens.includes(id)?'flex':'block';
 }
-
 function showLanding(){
   if(isShopOpen()) showScreen('landing-screen');
   else showScreen('closed-screen');
 }
 function showTrack(){
-  document.getElementById('track-back-btn').onclick = isShopOpen()
-    ? ()=>showScreen('landing-screen')
-    : ()=>showScreen('closed-screen');
+  document.getElementById('track-back-btn').onclick=isShopOpen()
+    ?()=>showScreen('landing-screen')
+    :()=>showScreen('closed-screen');
   showScreen('track-screen');
-  if(lastPhone) document.getElementById('track-phone').value = lastPhone;
+  if(lastPhone) document.getElementById('track-phone').value=lastPhone;
 }
-function goToOrder(){ showScreen('order-screen'); buildTimeSlots(); }
+function goToOrder(){
+  showScreen('order-screen');
+  loadSlots(false);
+}
 function goToTrackAfterSuccess(){
-  document.getElementById('track-phone').value = lastPhone;
+  document.getElementById('track-phone').value=lastPhone;
   showScreen('track-screen');
   trackOrders();
 }
 
-// ══════════ بارگذاری ══════════
-async function loadMenu(){showScreen('empty-state');
-document.getElementById('empty-state-msg').textContent = 'سفارش‌گیری موقتاً متوقف شده است.';
-return;
-  document.getElementById('pay-bank').textContent  = PAYMENT_INFO.bank;
-  document.getElementById('pay-card').textContent  = PAYMENT_INFO.card;
-  document.getElementById('pay-owner').textContent = PAYMENT_INFO.owner;
-  document.getElementById('main-header').style.display = 'block';
-  startClock();
+// ══════════ تولید لیست اسلات‌ها ══════════
+function generateAllSlots(){
+  const slots=[];
+  let h=SLOT_START_H, m=SLOT_START_M;
+  while(h*60+m <= SLOT_END_H*60+SLOT_END_M){
+    slots.push(String(h).padStart(2,'0')+':'+String(m).padStart(2,'0'));
+    m+=SLOT_MINUTES;
+    if(m>=60){h++;m-=60;}
+  }
+  return slots;
+}
 
-  // اگر خارج از ساعت کاری — صفحه بسته نشون بده
-  if(!isShopOpen()){
-    showScreen('closed-screen');
-    return;
+// ══════════ بارگذاری اسلات‌های پر از Supabase ══════════
+async function loadSlots(showRefreshAnim){
+  const container=document.getElementById('slots-container');
+  const refreshBtn=document.getElementById('slot-refresh-btn');
+  
+  if(showRefreshAnim && refreshBtn){
+    refreshBtn.innerHTML='<span class="spinner-sm"></span> در حال بروزرسانی...';
+    refreshBtn.disabled=true;
   }
 
-  // بارگذاری تنظیمات آنلاین (وضعیت + ساعت کاری)
   try{
-    const cfgRes = await supaFetch('/rest/v1/settings?key=in.(online_orders_enabled,shop_open_hour,shop_close_hour)&select=key,value');
+    // امروز — تاریخ محلی YYYY-MM-DD
+    const today=new Date();
+    const dateStr=today.getFullYear()+'-'+
+      String(today.getMonth()+1).padStart(2,'0')+'-'+
+      String(today.getDate()).padStart(2,'0');
+
+    // واکشی سفارش‌های امروز که draft منقضی‌شده یا pending/confirmed/preparing/ready نیستند
+    // status هایی که slot رو می‌گیرند: draft (موقت — فقط ۵ دقیقه)، pending، confirmed، preparing، ready
+    const res=await supaFetch(
+      '/rest/v1/online_orders'+
+      '?select=delivery_time,status,created_at'+
+      '&created_at=gte.'+dateStr+'T00:00:00'+
+      '&status=in.(draft,pending,confirmed,preparing,ready)'+
+      '&order=created_at.asc',
+      {headers:{'Accept':'application/json'}}
+    );
+    
+    if(!res.ok) throw new Error('server '+res.status);
+    const rows=await res.json();
+    
+    // محاسبه اسلات‌های پر
+    // draft‌هایی که بیشتر از ۵ دقیقه پیش ساخته شدن رو نادیده بگیر
+    const nowMs=Date.now();
+    const DRAFT_EXPIRY_MS=5*60*1000; // ۵ دقیقه
+    
+    const taken={};
+    rows.forEach(r=>{
+      if(!r.delivery_time) return;
+      // نرمال‌سازی زمان به HH:MM
+      const t=String(r.delivery_time).substring(0,5);
+      
+      if(r.status==='draft'){
+        // draft‌های منقضی‌شده رو حساب نکن
+        const createdMs=r.created_at?new Date(r.created_at).getTime():0;
+        if(nowMs-createdMs > DRAFT_EXPIRY_MS) return;
+        // draft جاری کاربر خودش رو هم حساب نکن
+        if(currentDraftId && r.id===currentDraftId) return;
+      }
+      
+      taken[t]=(taken[t]||0)+1;
+    });
+    
+    takenSlots=taken;
+    renderSlots();
+    
+    const now=new Date();
+    document.getElementById('last-refresh-txt').textContent=
+      'آخرین بروزرسانی: '+tp(String(now.getHours()).padStart(2,'0'))+':'+tp(String(now.getMinutes()).padStart(2,'0'))+':'+tp(String(now.getSeconds()).padStart(2,'0'));
+    
+  } catch(e){
+    container.innerHTML='<div class="err">خطا در بارگذاری اسلات‌ها. دوباره امتحان کن.</div>';
+  } finally{
+    if(refreshBtn){
+      refreshBtn.innerHTML='🔄 بروزرسانی وضعیت اسلات‌ها';
+      refreshBtn.disabled=false;
+    }
+  }
+}
+
+// ══════════ رندر اسلات‌ها ══════════
+function renderSlots(){
+  const container=document.getElementById('slots-container');
+  const allSlots=generateAllSlots();
+  const now=new Date();
+  const nowMin=now.getHours()*60+now.getMinutes();
+  
+  let html='<div class="slots-grid">';
+  
+  allSlots.forEach(slotTime=>{
+    const [sh,sm]=slotTime.split(':').map(Number);
+    const slotMin=sh*60+sm;
+    
+    const isPast=slotMin<nowMin+SLOT_MIN_AHEAD;
+    const takenCount=takenSlots[slotTime]||0;
+    const isTaken=takenCount>=SLOT_CAPACITY;
+    const isSelected=selectedTime===slotTime;
+    
+    let cls='slot-btn';
+    let statusTxt='';
+    let disabled='';
+    
+    if(isSelected){
+      cls+=' slot-selected';
+      statusTxt='انتخاب شما ✓';
+    } else if(isPast){
+      cls+=' slot-past';
+      statusTxt='گذشته';
+      disabled='disabled';
+    } else if(isTaken){
+      cls+=' slot-taken';
+      statusTxt='🔴 پر شده';
+      disabled='disabled';
+    } else {
+      cls+=' slot-free';
+      statusTxt='خالی';
+    }
+    
+    const displayTime=tp(String(sh).padStart(2,'0'))+':'+tp(String(sm).padStart(2,'0'));
+    
+    html+=`<button type="button" class="${cls}" ${disabled} onclick="selectSlot('${slotTime}')">
+      <div class="slot-time">${displayTime}</div>
+      <div class="slot-status">${statusTxt}</div>
+    </button>`;
+  });
+  
+  html+='</div>';
+  container.innerHTML=html;
+  
+  // اگر اسلات انتخاب‌شده پر شده یا گذشته، ریست کن
+  if(selectedTime){
+    const [sh,sm]=selectedTime.split(':').map(Number);
+    const slotMin=sh*60+sm;
+    const isPast=slotMin<nowMin+SLOT_MIN_AHEAD;
+    const isTaken=(takenSlots[selectedTime]||0)>=SLOT_CAPACITY;
+    if(isPast||isTaken){
+      selectedTime=null;
+      document.getElementById('time-err').textContent='⚠️ اسلات انتخابی شما دیگر در دسترس نیست. لطفاً دوباره انتخاب کن.';
+    }
+  }
+}
+
+function selectSlot(slotTime){
+  selectedTime=slotTime;
+  document.getElementById('time-err').textContent='';
+  renderSlots();
+}
+
+// ══════════ بارگذاری اصلی ══════════
+async function loadMenu(){
+  showScreen('empty-state')
+
+  document.getElementById('pay-bank').textContent  =PAYMENT_INFO.bank;
+  document.getElementById('pay-card').textContent  =PAYMENT_INFO.card;
+  document.getElementById('pay-owner').textContent =PAYMENT_INFO.owner;
+  document.getElementById('main-header').style.display='block';
+  startClock();
+
+  if(!isShopOpen()){showScreen('closed-screen');return;}
+
+  try{
+    const cfgRes=await supaFetch('/rest/v1/settings?key=in.(online_orders_enabled,shop_open_hour,shop_close_hour)&select=key,value');
     if(cfgRes.ok){
-      const cfgData = await cfgRes.json();
+      const cfgData=await cfgRes.json();
       if(Array.isArray(cfgData)){
-        let paused = false;
+        let paused=false;
         cfgData.forEach(r=>{
-          if(r.key==='online_orders_enabled' && r.value==='false') paused = true;
-          if(r.key==='shop_open_hour')  OPEN_HOUR  = parseInt(r.value)||20;
-          if(r.key==='shop_close_hour') CLOSE_HOUR = parseInt(r.value)||22;
+          if(r.key==='online_orders_enabled'&&r.value==='false') paused=true;
+          if(r.key==='shop_open_hour')  OPEN_HOUR =parseInt(r.value)||20;
+          if(r.key==='shop_close_hour') CLOSE_HOUR=parseInt(r.value)||23;
         });
-        if(paused){ showScreen('paused-screen'); return; }
+        if(paused){showScreen('empty-state');return;}
       }
     }
-  } catch(e){ /* در صورت خطا با مقادیر پیش‌فرض ادامه می‌دهیم */ }
+  } catch(e){}
 
   let res;
   try{
-    res = await supaFetch('/rest/v1/menu?select=*&order=sort_order.asc');
+    res=await supaFetch('/rest/v1/menu?select=*&order=sort_order.asc');
   } catch(e){
-    document.getElementById('empty-state-msg').innerHTML = 'اتصال به اینترنت برقرار نشد.<br><small>'+e.message+'</small>';
+    document.getElementById('empty-state-msg').innerHTML='اتصال به اینترنت برقرار نشد.<br><small>'+e.message+'</small>';
     showScreen('empty-state');
     return;
   }
   if(!res.ok){
-    let msg = 'خطا در دریافت منو ('+res.status+')';
+    let msg='خطا در دریافت منو ('+res.status+')';
     if(res.status===401||res.status===403) msg='دسترسی به جدول منو مجاز نیست (RLS).';
-    document.getElementById('empty-state-msg').textContent = msg;
+    document.getElementById('empty-state-msg').textContent=msg;
     showScreen('empty-state');
     return;
   }
-  const allRows = await res.json();
-  menu = (Array.isArray(allRows)?allRows:[]).filter(m=>Number(m.price)>0);
+  const allRows=await res.json();
+  menu=(Array.isArray(allRows)?allRows:[]).filter(m=>Number(m.price)>0);
   if(!menu.length){
-    document.getElementById('empty-state-msg').textContent = 'منو در حال حاضر خالی است.';
+    document.getElementById('empty-state-msg').textContent='منو در حال حاضر خالی است.';
     showScreen('empty-state');
     return;
   }
@@ -627,24 +830,21 @@ return;
 
 // ══════════ رندر منو ══════════
 function renderMenu(){
-  const el = document.getElementById('menu-list');
-  el.innerHTML = menu.map(m=>{
-    const q = qtyMap[m.id]||0;
-    const sauces = sauceMap[m.id]||[];
-    const sauceHtml = q>0 ? `
+  const el=document.getElementById('menu-list');
+  el.innerHTML=menu.map(m=>{
+    const q=qtyMap[m.id]||0;
+    const sauces=sauceMap[m.id]||[];
+    const sauceHtml=q>0?`
       <div class="sauce-row visible">
         <span class="sauce-label-txt">سس برای «${m.name}»:</span>
         <div class="sauce-chips">
           ${SAUCES.map(s=>`<span class="sauce-chip ${sauces.includes(s)?'active':''}" onclick="toggleSauce('${m.id}','${s}')">${s}</span>`).join('')}
         </div>
-      </div>` : '';
+      </div>`:'';
     return `
     <div class="menu-item">
       <div class="mi-row">
-        <div>
-          <div class="mi-name">${m.name}</div>
-          <div class="mi-price">${fmt(m.price)} تومان</div>
-        </div>
+        <div><div class="mi-name">${m.name}</div><div class="mi-price">${fmt(m.price)} تومان</div></div>
         <div class="qty-ctrl">
           <button class="qty-btn" onclick="changeQty('${m.id}',-1)">−</button>
           <span class="qty-val">${tp(q)}</span>
@@ -656,23 +856,22 @@ function renderMenu(){
   }).join('');
   updateTotal();
 }
-
-function changeQty(id, delta){
-  qtyMap[id] = Math.max(0,(qtyMap[id]||0)+delta);
+function changeQty(id,delta){
+  qtyMap[id]=Math.max(0,(qtyMap[id]||0)+delta);
   if(!qtyMap[id]) delete sauceMap[id];
   renderMenu();
 }
-function toggleSauce(itemId, sauce){
+function toggleSauce(itemId,sauce){
   if(!sauceMap[itemId]) sauceMap[itemId]=[];
-  const idx = sauceMap[itemId].indexOf(sauce);
+  const idx=sauceMap[itemId].indexOf(sauce);
   if(idx>=0) sauceMap[itemId].splice(idx,1); else sauceMap[itemId].push(sauce);
   renderMenu();
 }
 function updateTotal(){
   let subtotal=0;
-  menu.forEach(m=>{ subtotal += (qtyMap[m.id]||0)*Number(m.price); });
-  const discountAmt = Math.round(subtotal*discountPct/100);
-  const total = subtotal-discountAmt;
+  menu.forEach(m=>{subtotal+=(qtyMap[m.id]||0)*Number(m.price);});
+  const discountAmt=Math.round(subtotal*discountPct/100);
+  const total=subtotal-discountAmt;
   const subRow=document.getElementById('subtotal-row');
   const discRow=document.getElementById('discount-row');
   if(discountPct>0){
@@ -720,76 +919,39 @@ function setDelivery(type){
   document.getElementById('address-wrap').style.display=type==='delivery'?'block':'none';
 }
 
-// ══════════ زمان تحویل ══════════
-function buildTimeSlots(){
-  const now=new Date();
-  const earliest=new Date(now.getTime()+40*60000);
-  const hE=earliest.getHours(), mE=earliest.getMinutes();
-  document.getElementById('earliest-time').textContent=
-    tp(String(hE).padStart(2,'0'))+':'+tp(String(Math.ceil(mE/5)*5).padStart(2,'0'));
-
-  let h=hE, m=Math.ceil(mE/30)*30;
-  if(m>=60){h++;m=0;}
-  const slots=[];
-  // اسلات‌ها تا آخر ساعت کاری (۲۲:۰۰)
-  while(h<CLOSE_HOUR||(h===CLOSE_HOUR&&m===0)){
-    slots.push({h,m});
-    m+=30; if(m>=60){h++;m=0;}
-  }
-  const cont=document.getElementById('time-slots');
-  cont.innerHTML=slots.map(s=>{
-    const lbl=tp(String(s.h).padStart(2,'0'))+':'+tp(String(s.m).padStart(2,'0'));
-    const val=String(s.h).padStart(2,'0')+':'+String(s.m).padStart(2,'0');
-    return `<button type="button" class="time-slot" data-val="${val}" onclick="selectTimeSlot(this,'${val}')">${lbl}</button>`;
-  }).join('')+(slots.length<8?`<button type="button" class="time-slot" onclick="selectCustomTime()">ساعت دیگر...</button>`:'');
-}
-function selectTimeSlot(btn,val){
-  document.querySelectorAll('.time-slot').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active'); selectedTime=val;
-  document.getElementById('custom-time-wrap').classList.remove('visible');
-  document.getElementById('time-err').textContent='';
-}
-function selectCustomTime(){
-  document.querySelectorAll('.time-slot').forEach(b=>b.classList.remove('active'));
-  document.getElementById('custom-time-wrap').classList.add('visible');
-  selectedTime=null;
-}
-function getSelectedTime(){
-  const custom=(document.getElementById('custom-time').value||'').trim();
-  return custom||selectedTime;
-}
-
-// ══════════ ذخیره پیش‌نویس (مرحله ۱) ══════════
+// ══════════ ذخیره سفارش (مرحله ۱) ══════════
 async function saveDraft(){
   const errEl=document.getElementById('form-error'); errEl.textContent='';
 
-  // بررسی فعال بودن پذیرش سفارش آنلاین
   try{
     const cfg=await supaFetch('/rest/v1/settings?key=eq.online_orders_enabled&select=value');
     const cfgData=cfg.ok?await cfg.json():[];
     const isEnabled=!Array.isArray(cfgData)||!cfgData.length||cfgData[0].value!=='false';
-    if(!isEnabled){ errEl.textContent='⛔ در حال حاضر سفارش‌گیری آنلاین موقتاً متوقف شده است.'; return; }
+    if(!isEnabled){errEl.textContent='⛔ در حال حاضر سفارش‌گیری آنلاین موقتاً متوقف شده است.';return;}
   } catch(e){}
 
   const name=(document.getElementById('cust-name').value||'').trim();
   const phone=normalizePhone(document.getElementById('cust-phone').value);
   const note=(document.getElementById('order-note').value||'').trim();
   const address=(document.getElementById('cust-address').value||'').trim();
-  const time=getSelectedTime();
 
-  // اعتبارسنجی
   if(!phone||phone.length<10){errEl.textContent='لطفاً شماره موبایل معتبر وارد کنید';return;}
   const items=menu.filter(m=>(qtyMap[m.id]||0)>0).map(m=>({
     itemId:m.id,name:m.name,qty:qtyMap[m.id],unitPrice:Number(m.price),sauces:sauceMap[m.id]||[]
   }));
   if(!items.length){errEl.textContent='حداقل یک غذا از منو انتخاب کنید';return;}
   if(deliveryType==='delivery'&&!address){errEl.textContent='آدرس را برای تحویل درب منزل وارد کنید';return;}
-  if(!time){errEl.textContent='لطفاً ساعت تحویل را انتخاب کنید';return;}
-  // بررسی حداقل ۴۰ دقیقه
-  const [hh,mm]=time.split(':').map(Number);
-  const earliest40=new Date(new Date().getTime()+38*60000);
-  const selTime=new Date(); selTime.setHours(hh,mm,0,0);
-  if(selTime<earliest40){errEl.textContent='زودترین زمان ممکن ۴۰ دقیقه دیگر است';return;}
+  if(!selectedTime){errEl.textContent='لطفاً یک اسلات زمانی خالی انتخاب کنید';return;}
+
+  // بررسی مجدد اسلات در لحظه ثبت
+  await loadSlots(false);
+  const freshTaken=(takenSlots[selectedTime]||0);
+  if(freshTaken>=SLOT_CAPACITY){
+    errEl.textContent='⛔ متأسفانه این اسلات همین الان پر شد. لطفاً اسلات دیگری انتخاب کن.';
+    selectedTime=null;
+    renderSlots();
+    return;
+  }
 
   const btn=document.getElementById('draft-btn');
   btn.disabled=true; btn.textContent='در حال ذخیره...';
@@ -806,11 +968,10 @@ async function saveDraft(){
       note:note||null,
       delivery_type:deliveryType,
       address:deliveryType==='delivery'?address:null,
-      delivery_time:time,
+      delivery_time:selectedTime,
       status:'draft'
     };
 
-    // اگر قبلاً draft داشتیم آپدیت کن، وگرنه insert
     let res;
     if(currentDraftId){
       res=await supaFetch('/rest/v1/online_orders?id=eq.'+currentDraftId,{
@@ -831,8 +992,7 @@ async function saveDraft(){
     currentDraftId=saved?.id;
     lastPhone=phone;
 
-    // نمایش خلاصه در صفحه پرداخت
-    showPaymentScreen(saved, items, {subtotal,discountAmt,total,discountCode,discountPct,time,deliveryType,address,name,phone});
+    showPaymentScreen(saved,items,{subtotal,discountAmt,total,discountCode,discountPct,time:selectedTime,deliveryType,address,name,phone});
   } catch(e){
     console.error(e);
     errEl.textContent='خطا در ذخیره. اتصال اینترنت رو بررسی کن.';
@@ -840,9 +1000,8 @@ async function saveDraft(){
   }
 }
 
-// ══════════ نمایش صفحه پرداخت ══════════
-function showPaymentScreen(order, items, meta){
-  // خلاصه سفارش
+// ══════════ صفحه پرداخت ══════════
+function showPaymentScreen(order,items,meta){
   const deliveryLabel=meta.deliveryType==='delivery'?'🛵 تحویل درب منزل':'🏪 تحویل حضوری';
   const itemsHtml=items.map(i=>{
     const sc=i.sauces&&i.sauces.length?' <span style="font-size:11px;color:var(--text3);">('+i.sauces.join('، ')+')</span>':'';
@@ -865,11 +1024,10 @@ function showPaymentScreen(order, items, meta){
       ${meta.name?'👤 '+meta.name+'<br>':''}
       📱 ${meta.phone}<br>
       ${deliveryLabel}<br>
-      ⏰ ساعت تحویل: ${tp(meta.time)}
+      ⏰ زمان تحویل: ${tp(meta.time)}
       ${meta.address?'<br>📍 '+meta.address:''}
     </div>`;
 
-  // ریست فیش
   document.getElementById('receipt-text').value='';
   document.getElementById('file-drop-text').textContent='برای انتخاب عکس فیش ضربه بزنید';
   document.getElementById('file-drop').classList.remove('has-file');
@@ -879,7 +1037,7 @@ function showPaymentScreen(order, items, meta){
   showScreen('payment-screen');
 }
 
-// ══════════ آپلود فیش ══════════
+// ══════════ فیش ══════════
 function onFileSelected(e){
   const file=e.target.files[0];
   if(!file){selectedFile=null;document.getElementById('file-drop').classList.remove('has-file');document.getElementById('receipt-preview').style.display='none';return;}
@@ -900,7 +1058,7 @@ async function uploadReceiptImage(file){
   return SUPA_URL+'/storage/v1/object/public/receipts/'+path;
 }
 
-// ══════════ تأیید نهایی (مرحله ۲) ══════════
+// ══════════ ثبت نهایی ══════════
 async function finalizeOrder(){
   const errEl=document.getElementById('payment-error'); errEl.textContent='';
   const receiptText=(document.getElementById('receipt-text').value||'').trim();
@@ -917,11 +1075,7 @@ async function finalizeOrder(){
     const res=await supaFetch('/rest/v1/online_orders?id=eq.'+currentDraftId,{
       method:'PATCH',
       headers:{'Content-Type':'application/json','Prefer':'return=representation'},
-      body:JSON.stringify({
-        status:'pending',
-        receipt_text:receiptText||null,
-        receipt_image_url:imageUrl
-      })
+      body:JSON.stringify({status:'pending',receipt_text:receiptText||null,receipt_image_url:imageUrl})
     });
     if(!res.ok) throw new Error('server '+(await res.text().catch(()=>'')));
     const data=await res.json();
@@ -939,7 +1093,7 @@ async function finalizeOrder(){
   }
 }
 
-// ══════════ پیگیری / ادامه خرید ══════════
+// ══════════ پیگیری ══════════
 async function trackOrders(){
   const phone=normalizePhone(document.getElementById('track-phone').value);
   const errEl=document.getElementById('track-err'); errEl.textContent='';
@@ -957,7 +1111,6 @@ async function trackOrders(){
     );
     if(!res.ok) throw new Error('server '+res.status);
     const orders=await res.json();
-
     if(!orders.length){
       document.getElementById('track-results').innerHTML=`
         <div class="card" style="margin-top:14px;text-align:center;color:var(--text3);font-size:13px;padding:24px 16px;">
@@ -965,7 +1118,7 @@ async function trackOrders(){
         </div>`;
       return;
     }
-    document.getElementById('track-results').innerHTML = orders.map(o=>renderOrderCard(o)).join('');
+    document.getElementById('track-results').innerHTML=orders.map(o=>renderOrderCard(o)).join('');
   } catch(e){
     errEl.textContent='خطا در جستجو. دوباره امتحان کن.';
   } finally{
@@ -975,12 +1128,12 @@ async function trackOrders(){
 
 function renderOrderCard(o){
   const statusMap={
-    draft:   {label:'پیش‌نویس — پرداخت نشده',cls:'status-draft',   icon:'📝',steps:[1,0,0,0]},
-    pending: {label:'در انتظار تأیید',         cls:'status-pending', icon:'⏳',steps:[1,1,0,0]},
-    confirmed:{label:'تأیید شد',               cls:'status-confirmed',icon:'✅',steps:[1,1,1,0]},
-    preparing:{label:'در حال آماده‌سازی',      cls:'status-preparing',icon:'👨‍🍳',steps:[1,1,1,0]},
-    ready:   {label:'آماده تحویل',             cls:'status-ready',   icon:'🎉',steps:[1,1,1,1]},
-    rejected:{label:'رد شد',                   cls:'status-rejected',icon:'❌',steps:[1,0,0,0]}
+    draft:{label:'پیش‌نویس — پرداخت نشده',cls:'status-draft',icon:'📝',steps:[1,0,0,0]},
+    pending:{label:'در انتظار تأیید',cls:'status-pending',icon:'⏳',steps:[1,1,0,0]},
+    confirmed:{label:'تأیید شد',cls:'status-confirmed',icon:'✅',steps:[1,1,1,0]},
+    preparing:{label:'در حال آماده‌سازی',cls:'status-preparing',icon:'👨‍🍳',steps:[1,1,1,0]},
+    ready:{label:'آماده تحویل',cls:'status-ready',icon:'🎉',steps:[1,1,1,1]},
+    rejected:{label:'رد شد',cls:'status-rejected',icon:'❌',steps:[1,0,0,0]}
   };
   const st=statusMap[o.status]||statusMap.pending;
   const items=Array.isArray(o.items)?o.items:[];
@@ -997,13 +1150,11 @@ function renderOrderCard(o){
     return `<div style="font-size:13px;line-height:2;">× ${tp(i.qty)} ${i.name}${sc}</div>`;
   }).join('');
   const discountHtml=o.discount_pct?`<div style="font-size:12px;color:var(--green);margin-top:4px;">🎟️ تخفیف ${tp(o.discount_pct)}٪ — ${fmt(o.discount_amt)} تومان کسر شد</div>`:'';
-
-  // دکمه ادامه خرید برای draft
-  const continueBtn = (o.status==='draft' && isShopOpen())
-    ? `<button class="btn-primary" style="margin-top:14px;padding:12px;" onclick="resumeDraft('${o.id}')">💳 ادامه خرید و پرداخت ←</button>`
-    : (o.status==='draft'
-        ? `<div class="alert-warning" style="margin-top:12px;">⏰ پرداخت فقط بین ساعت ${tp(OPEN_HOUR)}:۰۰ تا ${tp(CLOSE_HOUR)}:۰۰ ممکن است.</div>`
-        : '');
+  const continueBtn=(o.status==='draft'&&isShopOpen())
+    ?`<button class="btn-primary" style="margin-top:14px;padding:12px;" onclick="resumeDraft('${o.id}')">💳 ادامه خرید و پرداخت ←</button>`
+    :(o.status==='draft'
+        ?`<div class="alert-warning" style="margin-top:12px;">⏰ پرداخت فقط بین ساعت ${tp(SLOT_START_H)}:${tp(String(SLOT_START_M).padStart(2,'0'))} تا ${tp(SLOT_END_H)}:${tp(String(SLOT_END_M).padStart(2,'0'))} ممکن است.</div>`
+        :'');
 
   return `
   <div class="track-order-card">
@@ -1029,9 +1180,7 @@ function renderOrderCard(o){
   </div>`;
 }
 
-// ══════════ بازگشت به پرداخت از پیگیری ══════════
 async function resumeDraft(orderId){
-  // واکشی سفارش
   try{
     const res=await supaFetch('/rest/v1/online_orders?id=eq.'+orderId,{headers:{'Accept':'application/json'}});
     if(!res.ok) throw new Error();
@@ -1042,24 +1191,17 @@ async function resumeDraft(orderId){
     lastPhone=o.customer_phone||lastPhone;
     const items=Array.isArray(o.items)?o.items:[];
     const meta={
-      subtotal:o.subtotal||o.total,
-      discountAmt:o.discount_amt||0,
-      total:o.total,
-      discountCode:o.discount_code||'',
-      discountPct:o.discount_pct||0,
-      time:o.delivery_time||'',
-      deliveryType:o.delivery_type||'pickup',
-      address:o.address||'',
-      name:o.customer_name||'',
-      phone:o.customer_phone||''
+      subtotal:o.subtotal||o.total,discountAmt:o.discount_amt||0,total:o.total,
+      discountCode:o.discount_code||'',discountPct:o.discount_pct||0,
+      time:o.delivery_time||'',deliveryType:o.delivery_type||'pickup',
+      address:o.address||'',name:o.customer_name||'',phone:o.customer_phone||''
     };
-    showPaymentScreen(o, items, meta);
+    showPaymentScreen(o,items,meta);
   } catch(e){
     alert('خطا در بارگذاری سفارش. دوباره امتحان کن.');
   }
 }
 
-// ══════════ کپی کارت ══════════
 function copyCard(){
   navigator.clipboard.writeText(PAYMENT_INFO.card.replace(/-/g,''));
   const btn=event.target, old=btn.textContent;
