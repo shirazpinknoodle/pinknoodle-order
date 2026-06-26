@@ -490,6 +490,7 @@ let discountCode = '';
 let selectedTime = null;
 let currentDraftId = null;
 let lastPhone    = '';
+let lastTrackCode = '';
 let takenSlots   = {};
 
 // ══════════ ابزارها ══════════
@@ -830,7 +831,7 @@ async function saveDraft(){
       discount_code:discountCode||null,discount_pct:discountPct||null,discount_amt:discountAmt||null,
       note:note||null,delivery_type:deliveryType,
       address:deliveryType==='delivery'?address:null,
-      delivery_time:selectedTime,status:'draft',tracking_code:(()=>{const month=String(new Date().getMonth()+1).padStart(2,'0');const time=(selectedTime||'').replace(':','');return month+time;})()
+      delivery_time:selectedTime,status:'draft'
     };
     let res;
     if(currentDraftId){
@@ -845,11 +846,14 @@ async function saveDraft(){
     if(!res.ok) throw new Error('server '+res.status+': '+(await res.text().catch(()=>'')));
     const data=await res.json();
     const saved=Array.isArray(data)?data[0]:data;
+    const trackCode=(()=>{const month=String(new Date().getMonth()+1).padStart(2,'0');const time=(selectedTime||'').replace(':','');return month+time;})();
+    const trackCodeDisplay=tp(trackCode);
+    lastTrackCode=trackCode;
     currentDraftId=saved?.id; lastPhone=phone;
-    showPaymentScreen(saved,items,{subtotal,discountAmt,total,discountCode,discountPct,time:selectedTime,deliveryType,address,name,phone});
+    showPaymentScreen(saved,items,{subtotal,discountAmt,total,discountCode,discountPct,time:selectedTime,deliveryType,address,name,phone,trackCode,trackCodeDisplay});
   } catch(e){
     console.error(e);
-    errEl.textContent='خطا: '+e.message;
+    errEl.textContent='خطا در ذخیره. اتصال اینترنت رو بررسی کن.';
     btn.disabled=false; btn.textContent='ثبت سفارش و رفتن به پرداخت ←';
   }
 }
@@ -872,7 +876,12 @@ function showPaymentScreen(order,items,meta){
     <div style="margin-top:10px;font-size:12px;color:var(--text3);line-height:2;">
       ${meta.name?'👤 '+meta.name+'<br>':''}📱 ${meta.phone}<br>${deliveryLabel}<br>
       ⏰ زمان تحویل: ${tp(meta.time)}${meta.address?'<br>📍 '+meta.address:''}
-    </div>`;
+    </div>
+    ${meta.trackCodeDisplay?`<div style="margin-top:10px;background:rgba(236,72,153,.08);border:1px solid rgba(236,72,153,.2);border-radius:10px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;">
+      <span style="font-size:11px;color:var(--text3);">🔖 کد پیگیری شما</span>
+      <span style="font-size:17px;font-weight:700;color:var(--pink-light);letter-spacing:3px;">${meta.trackCodeDisplay}</span>
+    </div>`:''}
+  `;
   document.getElementById('receipt-text').value='';
   document.getElementById('file-drop-text').textContent='برای انتخاب عکس فیش ضربه بزنید';
   document.getElementById('file-drop').classList.remove('has-file');
@@ -921,9 +930,9 @@ async function finalizeOrder(){
     if(!res.ok) throw new Error('server '+(await res.text().catch(()=>'')));
     const data=await res.json();
     const saved=Array.isArray(data)?data[0]:data;
-    const trackCode=saved?.tracking_code||saved?.order_number||'—';
-    document.getElementById('success-order-num').textContent=saved?.order_number?tp(String(saved.order_number)):(saved?.tracking_code||'—');
-    document.getElementById('success-tracking-code').textContent=saved?.tracking_code||'—';
+    const trackCode=saved?.tracking_code||lastTrackCode||'';
+    document.getElementById('success-order-num').textContent=saved?.order_number?tp(String(saved.order_number)):'—';
+    document.getElementById('success-tracking-code').textContent=trackCode?tp(trackCode):'—';
     document.getElementById('success-order-info').textContent='📱 '+lastPhone;
     showScreen('success-screen');
     document.getElementById('success-screen').style.display='flex';
