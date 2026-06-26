@@ -285,9 +285,9 @@ body{font-family:Tahoma,sans-serif;background:var(--bg);color:var(--text);min-he
           style="flex:1;padding:12px;border-radius:var(--radius-sm);border:1.5px solid var(--pink);background:rgba(236,72,153,.15);color:var(--pink-light);font-size:13px;font-family:inherit;font-weight:700;cursor:pointer;">
           🏪 تحویل حضوری
         </button>
-        <button type="button" id="btn-delivery" onclick="setDelivery('delivery')"
-          style="flex:1;padding:12px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:var(--bg3);color:var(--text3);font-size:13px;font-family:inherit;font-weight:600;cursor:pointer;">
-          🛵 تحویل درب منزل
+        <button type="button" id="btn-delivery" disabled
+          style="flex:1;padding:12px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:var(--bg3);color:var(--text3);font-size:13px;font-family:inherit;font-weight:600;cursor:not-allowed;opacity:.45;position:relative;" title="موقتاً غیرفعال">
+          🛵 تحویل درب منزل<br><span style="font-size:10px;color:var(--yellow);">⏸ موقتاً غیرفعال</span>
         </button>
       </div>
       <div id="delivery-notice" style="display:none;font-size:11px;color:var(--yellow);background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.25);border-radius:8px;padding:8px 12px;margin-bottom:10px;line-height:1.8;">
@@ -443,9 +443,14 @@ body{font-family:Tahoma,sans-serif;background:var(--bg);color:var(--text);min-he
   <div class="success-title">سفارش شما نهایی شد ✓</div>
   <div class="success-sub">سفارش و فیش پرداختی ارسال شد.<br>به محض بررسی توسط صندوق، آماده‌سازی شروع می‌شه.</div>
   <div class="order-code-box">
-    <div class="order-code-label">کد پیگیری</div>
+    <div class="order-code-label">شماره سفارش</div>
     <div class="order-code-val" id="success-order-num">—</div>
     <div class="order-code-sub" id="success-order-info"></div>
+  </div>
+  <div class="order-code-box" style="margin-top:0;border-top:none;border-radius:0 0 var(--radius-sm) var(--radius-sm);background:rgba(236,72,153,.07);">
+    <div class="order-code-label">کد پیگیری</div>
+    <div class="order-code-val" id="success-tracking-code" style="font-size:18px;letter-spacing:4px;color:var(--pink-light);">—</div>
+    <div class="order-code-sub">این کد را یادداشت کنید</div>
   </div>
   <div class="success-sub" style="font-size:12px;margin-top:4px;">
     برای پیگیری وضعیت، از صفحه اصلی «ادامه خرید یا پیگیری سفارش» رو انتخاب کن.
@@ -829,7 +834,7 @@ async function saveDraft(){
       discount_code:discountCode||null,discount_pct:discountPct||null,discount_amt:discountAmt||null,
       note:note||null,delivery_type:deliveryType,
       address:deliveryType==='delivery'?address:null,
-      delivery_time:selectedTime,status:'draft'
+      delivery_time:selectedTime,status:'draft',tracking_code:(()=>{const month=String(new Date().getMonth()+1).padStart(2,'0');const time=(selectedTime||'').replace(':','');return month+time;})()
     };
     let res;
     if(currentDraftId){
@@ -920,7 +925,9 @@ async function finalizeOrder(){
     if(!res.ok) throw new Error('server '+(await res.text().catch(()=>'')));
     const data=await res.json();
     const saved=Array.isArray(data)?data[0]:data;
-    document.getElementById('success-order-num').textContent=saved?.order_number?tp(String(saved.order_number)):'—';
+    const trackCode=saved?.tracking_code||saved?.order_number||'—';
+    document.getElementById('success-order-num').textContent=saved?.order_number?tp(String(saved.order_number)):(saved?.tracking_code||'—');
+    document.getElementById('success-tracking-code').textContent=saved?.tracking_code||'—';
     document.getElementById('success-order-info').textContent='📱 '+lastPhone;
     showScreen('success-screen');
     document.getElementById('success-screen').style.display='flex';
