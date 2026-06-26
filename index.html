@@ -580,33 +580,57 @@ function generateAllSlots(){
 // ══════════ گرفتن اسلات‌های پر از Supabase ══════════
 async function fetchTakenSlots(){
   const now = new Date().toISOString();
-  // confirmed/pending/preparing/ready → همیشه پر
-  // draft → فقط اگر reserved_until هنوز نگذشته (۵ دقیقه رزرو موقت)
-  const res=await supaFetch(
-    '/rest/v1/online_orders?select=delivery_time,status,reserved_until,slot_code'+
-    '&or=(status.in.(pending,confirmed,preparing,ready),and(status.eq.draft,reserved_until.gt.'+now+'))',
+  const validSlots = new Set(generateAllSlots());
+  const taken = {};
+
+  // query 1: سفارش‌های تأیید/در حال پردازش — همیشه پر
+  const r1 = await supaFetch(
+    '/rest/v1/online_orders?select=delivery_time&status=in.(pending,confirmed,preparing,ready)',
     {headers:{'Accept':'application/json'}}
   );
-  if(!res.ok) throw new Error('server '+res.status);
-  const rows=await res.json();
-  const taken={};
-  const validSlots=new Set(generateAllSlots());
-  rows.forEach(r=>{
-    if(!r.delivery_time) return;
-    const t=String(r.delivery_time).substring(0,5);
-    if(!validSlots.has(t)) return;
-    taken[t]=(taken[t]||0)+1;
-  });
+  if(r1.ok){
+    const rows1 = await r1.json();
+    rows1.forEach(r=>{
+      if(!r.delivery_time) return;
+      const t = String(r.delivery_time).substring(0,5);
+      if(!validSlots.has(t)) return;
+      taken[t] = (taken[t]||0) + 1;
+    });
+  }
+
+  // query 2: draft هایی که هنوز رزرو موقتشان نگذشته
+  const r2 = await supaFetch(
+    '/rest/v1/online_orders?select=delivery_time&status=eq.draft&reserved_until=gt.'+now,
+    {headers:{'Accept':'application/json'}}
+  );
+  if(r2.ok){
+    const rows2 = await r2.json();
+    rows2.forEach(r=>{
+      if(!r.delivery_time) return;
+      const t = String(r.delivery_time).substring(0,5);
+      if(!validSlots.has(t)) return;
+      taken[t] = (taken[t]||0) + 1;
+    });
+  }
+
   return taken;
 }
 
 // ══════════ بارگذاری اسلات‌های پر از Supabase ══════════
+let _slotAutoRefreshTimer = null;
+
 async function loadSlots(showRefreshAnim){
   const container=document.getElementById('slots-container');
   const refreshBtn=document.getElementById('slot-refresh-btn');
   if(showRefreshAnim&&refreshBtn){
     refreshBtn.innerHTML='<span class="spinner-sm"></span> در حال بروزرسانی...';
     refreshBtn.disabled=true;
+  }
+  // auto-refresh هر ۳۰ ثانیه تا اسلات‌های رزرو موقت منقضی‌شده آزاد بشن
+  if(!_slotAutoRefreshTimer){
+    _slotAutoRefreshTimer = setInterval(async()=>{
+      try{ takenSlots=await fetchTakenSlots(); renderSlots(); } catch(e){}
+    }, 30000);
   }
   try{
     takenSlots=await fetchTakenSlots();
