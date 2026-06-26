@@ -52,6 +52,7 @@ body{font-family:Tahoma,sans-serif;background:var(--bg);color:var(--text);min-he
 .open-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);border-radius:20px;padding:3px 10px;font-size:11px;color:var(--green);margin-top:8px;}
 .open-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:blink 1.4s infinite;}
 @keyframes blink{0%,100%{opacity:1;}50%{opacity:.3;}}
+@keyframes slideDown{from{opacity:0;transform:translateY(-16px);}to{opacity:1;transform:translateY(0);}}
 
 /* ══ منو ══ */
 .menu-item{border-bottom:1px solid var(--border);padding:12px 0;}
@@ -428,6 +429,9 @@ body{font-family:Tahoma,sans-serif;background:var(--bg);color:var(--text);min-he
       <button class="btn-primary" id="track-btn" onclick="trackOrders()">جستجوی سفارش</button>
     </div>
     <div id="track-results"></div>
+    <div id="track-polling-info" style="display:none;text-align:center;font-size:11px;color:var(--text3);margin-top:10px;display:none;">
+      <span class="open-dot" style="display:inline-block;margin-left:5px;"></span> وضعیت سفارش هر ۸ ثانیه بروز می‌شود
+    </div>
   </div>
 </div>
 
@@ -515,7 +519,7 @@ function showScreen(id){
   if(!el) return;
   el.style.display=(id==='landing-screen'||id==='success-screen')?'flex':'block';
 }
-function showLanding(){ showScreen('landing-screen'); }
+function showLanding(){ stopTrackPolling(); showScreen('landing-screen'); }
 function showTrack(){
   showScreen('track-screen');
   if(lastPhone) document.getElementById('track-phone').value=lastPhone;
@@ -929,6 +933,14 @@ async function finalizeOrder(){
 }
 
 // ══════════ پیگیری ══════════
+let trackPollingTimer=null;
+let lastTrackedStatuses={};
+
+function stopTrackPolling(){
+  if(trackPollingTimer){clearInterval(trackPollingTimer);trackPollingTimer=null;}
+  lastTrackedStatuses={};
+}
+
 async function trackOrders(){
   const phone=normalizePhone(document.getElementById('track-phone').value);
   const errEl=document.getElementById('track-err'); errEl.textContent='';
@@ -937,21 +949,71 @@ async function trackOrders(){
   const btn=document.getElementById('track-btn');
   btn.disabled=true; btn.textContent='در حال جستجو...';
   document.getElementById('track-results').innerHTML='';
+  stopTrackPolling();
   try{
-    const res=await supaFetch('/rest/v1/online_orders?customer_phone=eq.'+phone+'&order=created_at.desc&limit=5',
-      {headers:{'Accept':'application/json'}});
-    if(!res.ok) throw new Error('server '+res.status);
-    const orders=await res.json();
+    const orders=await fetchOrdersByPhone(phone);
     if(!orders.length){
       document.getElementById('track-results').innerHTML=`<div class="card" style="margin-top:14px;text-align:center;color:var(--text3);font-size:13px;padding:24px 16px;">هیچ سفارشی با این شماره یافت نشد.</div>`;
       return;
     }
+    orders.forEach(o=>{ lastTrackedStatuses[o.id]=o.status; });
     document.getElementById('track-results').innerHTML=orders.map(o=>renderOrderCard(o)).join('');
+    const hasActive=orders.some(o=>['pending','confirmed','preparing'].includes(o.status));
+    if(hasActive) startTrackPolling(phone);
+    const pi=document.getElementById('track-polling-info');
+    if(pi) pi.style.display=hasActive?'block':'none';
   } catch(e){
     errEl.textContent='خطا در جستجو. دوباره امتحان کن.';
   } finally{
     btn.disabled=false; btn.textContent='جستجوی سفارش';
   }
+}
+
+async function fetchOrdersByPhone(phone){
+  const res=await supaFetch('/rest/v1/online_orders?customer_phone=eq.'+phone+'&order=created_at.desc&limit=5',
+    {headers:{'Accept':'application/json'}});
+  if(!res.ok) throw new Error('server '+res.status);
+  return res.json();
+}
+
+function startTrackPolling(phone){
+  trackPollingTimer=setInterval(async()=>{
+    try{
+      const orders=await fetchOrdersByPhone(phone);
+      let anyChanged=false;
+      orders.forEach(o=>{
+        if(lastTrackedStatuses[o.id]!==undefined && lastTrackedStatuses[o.id]!==o.status){
+          anyChanged=true;
+          showStatusChangeNotif(o);
+          lastTrackedStatuses[o.id]=o.status;
+        } else if(lastTrackedStatuses[o.id]===undefined){
+          lastTrackedStatuses[o.id]=o.status;
+        }
+      });
+      if(anyChanged){
+        document.getElementById('track-results').innerHTML=orders.map(o=>renderOrderCard(o)).join('');
+      }
+      const hasActive=orders.some(o=>['pending','confirmed','preparing'].includes(o.status));
+      if(!hasActive) stopTrackPolling();
+    } catch(e){ /* silent */ }
+  }, 8000);
+}
+
+function showStatusChangeNotif(o){
+  const statusMap={
+    confirmed:{label:'تأیید شد ✅',color:'var(--green)'},
+    rejected:{label:'رد شد ❌',color:'var(--red)'},
+    preparing:{label:'در حال آماده‌سازی 👨‍🍳',color:'var(--pink-light)'},
+    ready:{label:'آماده تحویل 🎉',color:'var(--green)'},
+    pending:{label:'در انتظار تأیید ⏳',color:'var(--yellow)'}
+  };
+  const st=statusMap[o.status]||{label:o.status,color:'var(--text2)'};
+  const notif=document.createElement('div');
+  notif.style.cssText='position:fixed;top:16px;right:16px;left:16px;max-width:398px;margin:0 auto;background:var(--bg2);border:1.5px solid '+st.color+';border-radius:14px;padding:14px 16px;z-index:9999;font-size:13px;color:'+st.color+';box-shadow:0 4px 24px rgba(0,0,0,.5);display:flex;align-items:center;gap:10px;';
+  const orderNum=o.order_number?tp(String(o.order_number)):'—';
+  notif.innerHTML='<span style="font-size:20px;">🔔</span><div><div style="font-weight:700;margin-bottom:2px;">وضعیت سفارش تغییر کرد</div><div style="color:var(--text2);font-size:12px;">سفارش #'+orderNum+' — '+st.label+'</div></div><button onclick="this.parentElement.remove()" style="background:none;border:none;color:var(--text3);font-size:18px;cursor:pointer;margin-right:auto;padding:0 0 0 4px;">✕</button>';
+  document.body.appendChild(notif);
+  setTimeout(()=>{ if(notif.parentElement){notif.style.opacity='0';notif.style.transition='opacity .4s';setTimeout(()=>notif.remove(),400);} }, 6000);
 }
 
 function renderOrderCard(o){
