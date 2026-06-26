@@ -90,8 +90,8 @@ body{font-family:Tahoma,sans-serif;background:var(--bg);color:var(--text);min-he
 .slot-btn{padding:8px 4px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);font-size:12px;font-family:inherit;cursor:pointer;text-align:center;transition:all .15s;position:relative;line-height:1.3;}
 .slot-btn:hover:not(.slot-taken):not(.slot-past){border-color:var(--pink);background:rgba(236,72,153,.12);}
 .slot-btn.slot-selected{background:linear-gradient(135deg,#EC4899,#BE185D);border-color:var(--pink);color:#fff;font-weight:700;box-shadow:0 2px 10px rgba(236,72,153,.4);}
-.slot-btn.slot-taken{background:rgba(244,63,94,.08);border-color:rgba(244,63,94,.25);color:var(--red);cursor:not-allowed;opacity:.75;}
-.slot-btn.slot-past{background:var(--bg);border-color:var(--border);color:var(--text3);cursor:not-allowed;opacity:.45;}
+.slot-btn.slot-taken{background:rgba(244,63,94,.08);border-color:rgba(244,63,94,.25);color:var(--red);cursor:not-allowed;opacity:.75;pointer-events:none;}
+.slot-btn.slot-past{background:var(--bg);border-color:var(--border);color:var(--text3);cursor:not-allowed;opacity:.45;pointer-events:none;}
 .slot-time{font-size:12px;font-weight:600;}
 .slot-status{font-size:10px;margin-top:2px;}
 .slot-taken .slot-status{color:var(--red);}
@@ -607,7 +607,7 @@ function renderSlots(){
     else if(isTaken){cls+=' slot-taken';statusTxt='🔴 پر شده';disabled='disabled';}
     else{cls+=' slot-free';statusTxt='خالی';}
     const displayTime=tp(String(sh).padStart(2,'0'))+':'+tp(String(sm).padStart(2,'0'));
-    html+=`<button type="button" class="${cls}" ${disabled} onclick="selectSlot('${slotTime}')">
+    html+=`<button type="button" class="${cls}" ${disabled} onclick="selectSlot('${slotTime}')" ${isPast||isTaken?'':'style="cursor:pointer;"'}>
       <div class="slot-time">${displayTime}</div>
       <div class="slot-status">${statusTxt}</div>
     </button>`;
@@ -624,7 +624,57 @@ function renderSlots(){
   }
 }
 
-function selectSlot(slotTime){
+async function selectSlot(slotTime){
+  // بررسی زمان گذشته
+  const [sh,sm]=slotTime.split(':').map(Number);
+  const now=new Date();
+  const nowMin=now.getHours()*60+now.getMinutes();
+  const slotMin=sh*60+sm;
+  if(slotMin<nowMin+SLOT_MIN_AHEAD){
+    document.getElementById('time-err').textContent='⛔ این اسلات گذشته و قابل انتخاب نیست.';
+    return;
+  }
+  // بارگذاری تازه از دیتابیس قبل از انتخاب
+  const refreshBtn=document.getElementById('slot-refresh-btn');
+  if(refreshBtn){refreshBtn.disabled=true;}
+  try{
+    const today=new Date();
+    const dateStr=today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
+    const res=await supaFetch(
+      '/rest/v1/online_orders?select=id,delivery_time,status,created_at'+
+      '&created_at=gte.'+dateStr+'T00:00:00'+
+      '&status=in.(draft,pending,confirmed,preparing,ready)'+
+      '&order=created_at.asc',
+      {headers:{'Accept':'application/json'}}
+    );
+    if(res.ok){
+      const rows=await res.json();
+      const nowMs=Date.now();
+      const DRAFT_EXPIRY_MS=5*60*1000;
+      const taken={};
+      rows.forEach(r=>{
+        if(!r.delivery_time) return;
+        const t=String(r.delivery_time).substring(0,5);
+        if(r.status==='draft'){
+          const createdMs=r.created_at?new Date(r.created_at).getTime():0;
+          if(nowMs-createdMs>DRAFT_EXPIRY_MS) return;
+          if(currentDraftId&&r.id===currentDraftId) return;
+        }
+        taken[t]=(taken[t]||0)+1;
+      });
+      takenSlots=taken;
+    }
+  } catch(e){ /* اگر خطا بود از کش قبلی استفاده میکنیم */ }
+  finally{
+    if(refreshBtn){refreshBtn.disabled=false;}
+  }
+  // بررسی ظرفیت اسلات انتخاب‌شده
+  if((takenSlots[slotTime]||0)>=SLOT_CAPACITY){
+    document.getElementById('time-err').textContent='⛔ این اسلات الان پر شد! لطفاً اسلات دیگری انتخاب کن.';
+    selectedTime=null;
+    renderSlots();
+    return;
+  }
   selectedTime=slotTime;
   document.getElementById('time-err').textContent='';
   renderSlots();
