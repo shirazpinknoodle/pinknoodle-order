@@ -498,6 +498,31 @@ let lastTrackCode = '';
 let takenSlots   = {};
 
 // ══════════ ابزارها ══════════
+
+// تبدیل تاریخ میلادی به جلالی (ساده)
+function toJalaliSimple(date){
+  let gy=date.getFullYear(),gm=date.getMonth()+1,gd=date.getDate();
+  let gdm=[31,28,31,30,31,30,31,31,30,31,30,31];
+  if(((gy%4===0)&&(gy%100!==0))||(gy%400===0)) gdm[1]=29;
+  let g_y=gy-1600,g_m=gm-1,g_d=gd-1;
+  let gdn=365*g_y+Math.floor((g_y+3)/4)-Math.floor((g_y+99)/100)+Math.floor((g_y+399)/400);
+  for(let i=0;i<g_m;++i) gdn+=gdm[i]; gdn+=g_d;
+  let jdn=gdn-79,jnp=Math.floor(jdn/12053); jdn%=12053;
+  let jy=979+33*jnp+4*Math.floor(jdn/1461); jdn%=1461;
+  if(jdn>=366){jy+=Math.floor((jdn-1)/365);jdn=(jdn-1)%365;}
+  let jm=jdn<186?1+Math.floor(jdn/31):7+Math.floor((jdn-186)/30);
+  let jd=1+(jdn<186?jdn%31:(jdn-186)%30);
+  return String(jy).slice(-2)+String(jm).padStart(2,'0')+String(jd).padStart(2,'0');
+}
+
+// تولید کد منحصربه‌فرد اسلات: مثال ۱۴۰۴۰۳۱۵-۲۰۱۵
+function generateSlotCode(slotTime){
+  const now = new Date();
+  const jalali = toJalaliSimple(now);
+  const timeStr = (slotTime||'').replace(':','');
+  return jalali + '-' + timeStr;
+}
+
 function normalizePhone(s){
   s=String(s||'');
   s=s.replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d));
@@ -554,20 +579,22 @@ function generateAllSlots(){
 
 // ══════════ گرفتن اسلات‌های پر از Supabase ══════════
 async function fetchTakenSlots(){
+  const now = new Date().toISOString();
+  // confirmed/pending/preparing/ready → همیشه پر
+  // draft → فقط اگر reserved_until هنوز نگذشته (۵ دقیقه رزرو موقت)
   const res=await supaFetch(
-    '/rest/v1/online_orders?select=delivery_time'+
-    '&status=in.(draft,pending,confirmed,preparing,ready)',
+    '/rest/v1/online_orders?select=delivery_time,status,reserved_until,slot_code'+
+    '&or=(status.in.(pending,confirmed,preparing,ready),and(status.eq.draft,reserved_until.gt.'+now+'))',
     {headers:{'Accept':'application/json'}}
   );
   if(!res.ok) throw new Error('server '+res.status);
   const rows=await res.json();
   const taken={};
-  // فقط اسلات‌های امشب رو حساب کن
   const validSlots=new Set(generateAllSlots());
   rows.forEach(r=>{
     if(!r.delivery_time) return;
     const t=String(r.delivery_time).substring(0,5);
-    if(!validSlots.has(t)) return; // فقط اسلات‌های همین شب
+    if(!validSlots.has(t)) return;
     taken[t]=(taken[t]||0)+1;
   });
   return taken;
@@ -614,9 +641,12 @@ function renderSlots(){
     else if(isTaken){cls+=' slot-taken';statusTxt='🔴 پر شده';disabled='disabled';}
     else{cls+=' slot-free';statusTxt='خالی';}
     const displayTime=tp(String(sh).padStart(2,'0'))+':'+tp(String(sm).padStart(2,'0'));
+    const slotCode=generateSlotCode(slotTime);
+    const slotCodeDisplay=tp(slotCode);
     html+=`<button type="button" class="${cls}" ${disabled} onclick="selectSlot('${slotTime}')" ${isPast||isTaken?'':'style="cursor:pointer;"'}>
       <div class="slot-time">${displayTime}</div>
       <div class="slot-status">${statusTxt}</div>
+      ${!isPast&&!isTaken?`<div style="font-size:8px;color:rgba(255,255,255,.35);margin-top:1px;letter-spacing:.5px;">${slotCodeDisplay}</div>`:''}
     </button>`;
   });
   html+='</div>';
@@ -810,12 +840,16 @@ async function saveDraft(){
   btn.disabled=true; btn.textContent='در حال ذخیره...';
   try{
     const {subtotal,discountAmt,total}=updateTotal();
+    const slotCode = generateSlotCode(selectedTime);
+    const reservedUntil = new Date(Date.now() + 5*60*1000).toISOString(); // ۵ دقیقه رزرو موقت
     const body={
       customer_name:name||null,customer_phone:phone,items,total,subtotal,
       discount_code:discountCode||null,discount_pct:discountPct||null,discount_amt:discountAmt||null,
       note:note||null,delivery_type:deliveryType,
       address:deliveryType==='delivery'?address:null,
-      delivery_time:selectedTime,status:'draft'
+      delivery_time:selectedTime,status:'draft',
+      slot_code:slotCode,
+      reserved_until:reservedUntil
     };
     let res;
     if(currentDraftId){
@@ -830,9 +864,9 @@ async function saveDraft(){
     if(!res.ok) throw new Error('server '+res.status+': '+(await res.text().catch(()=>'')));
     const data=await res.json();
     const saved=Array.isArray(data)?data[0]:data;
-    const trackCode=(()=>{const month=String(new Date().getMonth()+1).padStart(2,'0');const time=(selectedTime||'').replace(':','');return month+time;})();
-    const trackCodeDisplay=tp(trackCode);
-    lastTrackCode=trackCode;
+    const trackCode = slotCode; // کد منحصربه‌فرد = تاریخ جلالی + ساعت اسلات
+    const trackCodeDisplay = tp(trackCode);
+    lastTrackCode = trackCode;
     currentDraftId=saved?.id; lastPhone=phone;
     // اسلات رو فوری در حافظه لوکال پر کن تا بقیه نتونن همزمان بگیرن
     if(selectedTime){ takenSlots[selectedTime]=(takenSlots[selectedTime]||0)+1; }
