@@ -585,7 +585,7 @@ async function fetchTakenSlots(){
 
   // query 1: سفارش‌های تأیید/در حال پردازش — همیشه پر
   const r1 = await supaFetch(
-    '/rest/v1/online_orders?select=delivery_time,status,reserved_until,slot_code&status=in.(pending,confirmed,preparing,ready)',
+    '/rest/v1/online_orders?select=delivery_time,status,reserved_until,slot_code&status=in.(pending,confirmed,preparing,ready,approved)',
     {headers:{'Accept':'application/json'}}
   );
   console.log('[Slots Q1] status:', r1.status);
