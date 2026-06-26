@@ -226,6 +226,10 @@ body{font-family:Tahoma,sans-serif;background:var(--bg);color:var(--text);min-he
     <div class="card">
       <div class="section-title">🍜 انتخاب از منو</div>
       <div id="menu-list"></div>
+      <div style="margin-top:14px;border-top:1px solid var(--border);padding-top:12px;">
+        <label style="font-size:12px;color:var(--text3);display:block;margin-bottom:6px;">📝 توضیحات (اختیاری)</label>
+        <textarea class="form-textarea" id="order-note" placeholder="مثال: تند کم، بدون پیاز..." style="min-height:55px;font-size:13px;"></textarea>
+      </div>
       <div style="margin-top:12px;">
         <div class="summary-row" id="subtotal-row" style="display:none;">
           <span class="summary-label">جمع آیتم‌ها</span><span id="subtotal-val"></span>
@@ -321,14 +325,6 @@ body{font-family:Tahoma,sans-serif;background:var(--bg);color:var(--text);min-he
       </button>
       <div class="last-refresh-txt" id="last-refresh-txt"></div>
       <div class="err" id="time-err" style="margin-top:8px;"></div>
-    </div>
-  </div>
-
-  <!-- توضیحات -->
-  <div class="section">
-    <div class="card">
-      <div class="section-title">📝 توضیحات (اختیاری)</div>
-      <textarea class="form-textarea" id="order-note" placeholder="مثال: بدون پیاز، تند کم..."></textarea>
     </div>
   </div>
 
@@ -481,7 +477,7 @@ const SLOT_CAPACITY= 1;
 const SLOT_MIN_AHEAD = 30;
 
 const DISCOUNT_CODES = { 'PINK10':10, 'VIP20':20, 'WELCOME15':15 };
-const SAUCES = ['سس کچاپ','سس مایونز','سس تند','سس سیر','سس باربیکیو','سس خردل'];
+const SAUCES = ['سس تری‌یاکی','سس خامه‌ای صورتی','سس گوجوچانگ تند','سس بادام زمینی'];
 
 // ══════════ state ══════════
 let menu         = [];
