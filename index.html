@@ -564,25 +564,18 @@ async function loadSlots(showRefreshAnim){
     const today=new Date();
     const dateStr=today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
     const res=await supaFetch(
-      '/rest/v1/online_orders?select=delivery_time,status,created_at'+
+      '/rest/v1/online_orders?select=delivery_time'+
       '&created_at=gte.'+dateStr+'T00:00:00'+
-      '&status=in.(draft,pending,confirmed,preparing,ready)'+
+      '&status=in.(pending,confirmed,preparing,ready)'+
       '&order=created_at.asc',
       {headers:{'Accept':'application/json'}}
     );
     if(!res.ok) throw new Error('server '+res.status);
     const rows=await res.json();
-    const nowMs=Date.now();
-    const DRAFT_EXPIRY_MS=5*60*1000;
     const taken={};
     rows.forEach(r=>{
       if(!r.delivery_time) return;
       const t=String(r.delivery_time).substring(0,5);
-      if(r.status==='draft'){
-        const createdMs=r.created_at?new Date(r.created_at).getTime():0;
-        if(nowMs-createdMs>DRAFT_EXPIRY_MS) return;
-        if(currentDraftId&&r.id===currentDraftId) return;
-      }
       taken[t]=(taken[t]||0)+1;
     });
     takenSlots=taken;
@@ -651,25 +644,18 @@ async function selectSlot(slotTime){
     const today=new Date();
     const dateStr=today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
     const res=await supaFetch(
-      '/rest/v1/online_orders?select=id,delivery_time,status,created_at'+
+      '/rest/v1/online_orders?select=delivery_time'+
       '&created_at=gte.'+dateStr+'T00:00:00'+
-      '&status=in.(draft,pending,confirmed,preparing,ready)'+
+      '&status=in.(pending,confirmed,preparing,ready)'+
       '&order=created_at.asc',
       {headers:{'Accept':'application/json'}}
     );
     if(res.ok){
       const rows=await res.json();
-      const nowMs=Date.now();
-      const DRAFT_EXPIRY_MS=5*60*1000;
       const taken={};
       rows.forEach(r=>{
         if(!r.delivery_time) return;
         const t=String(r.delivery_time).substring(0,5);
-        if(r.status==='draft'){
-          const createdMs=r.created_at?new Date(r.created_at).getTime():0;
-          if(nowMs-createdMs>DRAFT_EXPIRY_MS) return;
-          if(currentDraftId&&r.id===currentDraftId) return;
-        }
         taken[t]=(taken[t]||0)+1;
       });
       takenSlots=taken;
@@ -822,6 +808,13 @@ async function saveDraft(){
   if(!items.length){errEl.textContent='حداقل یک غذا از منو انتخاب کنید';return;}
   if(deliveryType==='delivery'&&!address){errEl.textContent='آدرس را برای تحویل درب منزل وارد کنید';return;}
   if(!selectedTime){errEl.textContent='لطفاً یک اسلات زمانی خالی انتخاب کنید';return;}
+  // بررسی اینکه اسلات هنوز در آینده باشه
+  const [chk_h,chk_m]=selectedTime.split(':').map(Number);
+  const chkNow=new Date(); const chkNowMin=chkNow.getHours()*60+chkNow.getMinutes();
+  if(chk_h*60+chk_m<chkNowMin+SLOT_MIN_AHEAD){
+    errEl.textContent='⛔ این اسلات گذشته است. لطفاً اسلات دیگری انتخاب کن.';
+    selectedTime=null; renderSlots(); return;
+  }
   await loadSlots(false);
   if((takenSlots[selectedTime]||0)>=SLOT_CAPACITY){
     errEl.textContent='⛔ متأسفانه این اسلات همین الان پر شد. لطفاً اسلات دیگری انتخاب کن.';
@@ -855,6 +848,8 @@ async function saveDraft(){
     const trackCodeDisplay=tp(trackCode);
     lastTrackCode=trackCode;
     currentDraftId=saved?.id; lastPhone=phone;
+    // اسلات رو فوری در حافظه لوکال پر کن تا بقیه نتونن همزمان بگیرن
+    if(selectedTime){ takenSlots[selectedTime]=(takenSlots[selectedTime]||0)+1; }
     showPaymentScreen(saved,items,{subtotal,discountAmt,total,discountCode,discountPct,time:selectedTime,deliveryType,address,name,phone,trackCode,trackCodeDisplay});
   } catch(e){
     console.error(e);
