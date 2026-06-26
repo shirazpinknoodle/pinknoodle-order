@@ -172,6 +172,13 @@ body{font-family:Tahoma,sans-serif;background:var(--bg);color:var(--text);min-he
   <div class="hint">در حال بارگذاری...</div>
 </div>
 
+<!-- بنر debug موجودی — فقط وقتی stock در Supabase خالی باشد نشان داده می‌شود -->
+<div id="stock-debug-banner" style="display:none;background:rgba(244,63,94,.15);border:1.5px solid rgba(244,63,94,.5);border-radius:12px;margin:12px 16px;padding:14px 16px;font-size:12px;color:var(--red);line-height:2;">
+  ⚠️ <strong>فیلد stock در جدول menu خالی است</strong><br>
+  برای فعال شدن محدودیت موجودی، باید در Supabase برای هر آیتم مقدار عددی در ستون <code>stock</code> وارد کنید.<br>
+  <span style="color:var(--text3);">مثال: stock = 5 یعنی فقط ۵ عدد قابل سفارش است. stock = 0 یعنی تمام شده. stock = null یعنی بدون محدودیت.</span>
+</div>
+
 <!-- هدر -->
 <div id="main-header" class="header" style="display:none;">
   <div class="brand">Pink<span> Noodle</span></div>
@@ -824,17 +831,26 @@ async function loadMenu(){
 async function loadInventoryLimits(){
   itemMaxMap = {};
   try{
-    const res = await supaFetch('/rest/v1/menu?select=id,stock');
-    if(!res.ok) return;
+    const res = await supaFetch('/rest/v1/menu?select=id,name,stock');
+    if(!res.ok){ console.warn('[Stock] API error:', res.status); return; }
     const rows = await res.json();
+    console.log('[Stock] raw data from Supabase:', JSON.stringify(rows));
     rows.forEach(r=>{
       if(r.stock === null || r.stock === undefined){
-        itemMaxMap[r.id] = 99; // بدون محدودیت
+        itemMaxMap[r.id] = 99;
       } else {
         itemMaxMap[r.id] = Math.max(0, Number(r.stock)||0);
       }
     });
-  } catch(e){ /* در صورت خطا بدون محدودیت */ }
+    console.log('[Stock] itemMaxMap:', JSON.stringify(itemMaxMap));
+    // نمایش بنر debug در صفحه
+    const hasStock = rows.some(r=> r.stock !== null && r.stock !== undefined);
+    if(!hasStock){
+      console.warn('[Stock] ⚠️ همه آیتم‌ها stock=null دارند — فیلد stock در Supabase خالی است!');
+      const banner = document.getElementById('stock-debug-banner');
+      if(banner) banner.style.display='block';
+    }
+  } catch(e){ console.error('[Stock] exception:', e); }
 }
 
 // ══════════ رندر منو ══════════
