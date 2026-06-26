@@ -226,10 +226,6 @@ body{font-family:Tahoma,sans-serif;background:var(--bg);color:var(--text);min-he
     <div class="card">
       <div class="section-title">🍜 انتخاب از منو</div>
       <div id="menu-list"></div>
-      <div style="margin-top:14px;border-top:1px solid var(--border);padding-top:12px;">
-        <label style="font-size:12px;color:var(--text3);display:block;margin-bottom:6px;">📝 توضیحات (اختیاری)</label>
-        <textarea class="form-textarea" id="order-note" placeholder="مثال: تند کم، بدون پیاز..." style="min-height:55px;font-size:13px;"></textarea>
-      </div>
       <div style="margin-top:12px;">
         <div class="summary-row" id="subtotal-row" style="display:none;">
           <span class="summary-label">جمع آیتم‌ها</span><span id="subtotal-val"></span>
@@ -240,6 +236,14 @@ body{font-family:Tahoma,sans-serif;background:var(--bg);color:var(--text);min-he
         </div>
         <div class="total-row"><span>جمع کل</span><span id="order-total">۰ تومان</span></div>
       </div>
+    </div>
+  </div>
+
+  <!-- توضیحات -->
+  <div class="section">
+    <div class="card">
+      <div class="section-title">📝 توضیحات (اختیاری)</div>
+      <textarea class="form-textarea" id="order-note" placeholder="مثال: تند کم، بدون پیاز، سس اضافه..." style="min-height:70px;"></textarea>
     </div>
   </div>
 
@@ -726,8 +730,9 @@ function renderMenu(){
     const q=qtyMap[m.id]||0;
     const sauces=sauceMap[m.id]||[];
     const sauceHtml=q>0?`<div class="sauce-row visible">
-      <span class="sauce-label-txt">سس برای «${m.name}»:</span>
+      <span class="sauce-label-txt">🥫 سس برای «${m.name}» (تکی یا ترکیبی):</span>
       <div class="sauce-chips">${SAUCES.map(s=>`<span class="sauce-chip ${sauces.includes(s)?'active':''}" onclick="toggleSauce('${m.id}','${s}')">${s}</span>`).join('')}</div>
+      ${sauces.length>0?`<span style="font-size:10px;color:var(--pink-light);margin-top:2px;">✓ ${tp(sauces.length)} سس انتخاب شده</span>`:'<span style="font-size:10px;color:var(--text3);margin-top:2px;">می‌توانید چند سس انتخاب کنید</span>'}
     </div>`:'';
     return `<div class="menu-item">
       <div class="mi-row">
