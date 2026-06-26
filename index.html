@@ -849,7 +849,7 @@ async function saveDraft(){
     showPaymentScreen(saved,items,{subtotal,discountAmt,total,discountCode,discountPct,time:selectedTime,deliveryType,address,name,phone});
   } catch(e){
     console.error(e);
-    errEl.textContent='خطا در ذخیره. اتصال اینترنت رو بررسی کن.';
+    errEl.textContent='خطا: '+e.message;
     btn.disabled=false; btn.textContent='ثبت سفارش و رفتن به پرداخت ←';
   }
 }
