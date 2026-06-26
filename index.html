@@ -467,36 +467,78 @@ const DISCOUNT_CODES = { 'PINK10':10, 'VIP20':20, 'WELCOME15':15 };
 
 // ══ بررسی موجودی — مستقیم از فیلد stock جدول menu ══
 // stock فیلد عددی در جدول menu است (null = بدون محدودیت، 0 = تمام شده)
-// این تابع موجودی تازه از Supabase می‌گیره و با سفارش مقایسه می‌کنه
+// این تابع موجودی تازه از Supabase می‌گیره، itemMaxMap رو بروز می‌کنه
+// و لیست آیتم‌های مشکل‌دار را برمی‌گرداند
 async function checkOnlineInventory(items){
   // دریافت تازه‌ترین موجودی از menu
   let freshMenuStock = {}; // { itemId: stock }
   const res = await supaFetch('/rest/v1/menu?select=id,name,stock');
   if(res.ok){
     const rows = await res.json();
-    rows.forEach(r=>{ freshMenuStock[r.id] = r.stock; });
+    rows.forEach(r=>{
+      freshMenuStock[r.id] = r.stock;
+      // بروزرسانی itemMaxMap با داده تازه
+      if(r.stock === null || r.stock === undefined){
+        itemMaxMap[r.id] = 99;
+      } else {
+        itemMaxMap[r.id] = Math.max(0, Number(r.stock)||0);
+      }
+    });
   } else {
-    // اگر API موجودی نداد، جلوی سفارش رو بگیر
-    return ['خطا در بررسی موجودی. لطفاً دوباره تلاش کنید.'];
+    return { errors: ['خطا در بررسی موجودی. لطفاً دوباره تلاش کنید.'], adjustedItems: null };
   }
 
-  // بررسی هر آیتم
+  // بررسی هر آیتم و ساخت لیست مشکل‌دار
   const errors = [];
+  const adjustedItems = []; // آیتم‌هایی که باید کاهش یابند
+
   items.forEach(it=>{
     const stock = freshMenuStock[it.itemId];
-    // اگر stock null یا undefined باشه = بدون محدودیت
-    if(stock === null || stock === undefined) return;
+    if(stock === null || stock === undefined) return; // بدون محدودیت
     const stockNum = Number(stock);
     if(isNaN(stockNum)) return;
     if(it.qty > stockNum){
       if(stockNum <= 0){
         errors.push(`«${it.name}» تمام شده است`);
+        adjustedItems.push({ itemId: it.itemId, name: it.name, currentQty: it.qty, maxQty: 0 });
       } else {
-        errors.push(`«${it.name}»: فقط ${tp(stockNum)} عدد موجود است`);
+        errors.push(`«${it.name}»: شما ${tp(it.qty)} عدد انتخاب کردید ولی فقط ${tp(stockNum)} عدد موجود است`);
+        adjustedItems.push({ itemId: it.itemId, name: it.name, currentQty: it.qty, maxQty: stockNum });
       }
     }
   });
-  return errors.length ? errors : null;
+  return errors.length ? { errors, adjustedItems } : null;
+}
+
+// ══ اعمال خودکار تعداد بر اساس موجودی واقعی ══
+function applyInventoryAdjustments(adjustedItems){
+  adjustedItems.forEach(adj=>{
+    qtyMap[adj.itemId] = adj.maxQty;
+    if(adj.maxQty === 0) delete sauceMap[adj.itemId];
+  });
+  renderMenu();
+}
+
+// ══ اصلاح خودکار سفارش و تلاش دوباره ══
+async function autoAdjustAndRetry(){
+  const errEl=document.getElementById('form-error');
+  errEl.textContent='';
+  const items=menu.filter(m=>(qtyMap[m.id]||0)>0).map(m=>({
+    itemId:m.id,name:m.name,qty:qtyMap[m.id],unitPrice:Number(m.price),sauces:sauceMap[m.id]||[]
+  }));
+  const invResult = await checkOnlineInventory(items);
+  if(invResult && invResult.adjustedItems){
+    applyInventoryAdjustments(invResult.adjustedItems);
+    // اسکرول به بالای منو
+    document.getElementById('menu-list').scrollIntoView({behavior:'smooth',block:'start'});
+    // پیام موفقیت اصلاح
+    const newItems=menu.filter(m=>(qtyMap[m.id]||0)>0);
+    if(!newItems.length){
+      errEl.innerHTML='<div style="background:rgba(244,63,94,.08);border:1px solid rgba(244,63,94,.3);border-radius:10px;padding:12px 14px;color:var(--red);font-size:13px;">⛔ همه آیتم‌های انتخابی تمام شده‌اند. لطفاً آیتم دیگری انتخاب کنید.</div>';
+    } else {
+      errEl.innerHTML='<div style="background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.3);border-radius:10px;padding:10px 14px;color:var(--green);font-size:12px;">✓ سفارش شما بر اساس موجودی فعلی اصلاح شد. بررسی کنید و دوباره ثبت نمایید.</div>';
+    }
+  }
 }
 
 const SAUCES = ['سس تری‌یاکی','سس خامه‌ای صورتی','سس گوجوچانگ تند','سس بادام زمینی'];
@@ -574,9 +616,12 @@ function showTrack(){
   showScreen('track-screen');
   if(lastPhone) document.getElementById('track-phone').value=lastPhone;
 }
-function goToOrder(){
+async function goToOrder(){
   showScreen('order-screen');
   loadSlots(false);
+  // بروزرسانی موجودی در هنگام ورود به صفحه سفارش
+  await loadInventoryLimits();
+  renderMenu();
 }
 function goToTrackAfterSuccess(){
   document.getElementById('track-phone').value=lastPhone;
@@ -929,15 +974,36 @@ async function saveDraft(){
     errEl.textContent='⛔ متأسفانه این اسلات همین الان پر شد. لطفاً اسلات دیگری انتخاب کن.';
     selectedTime=null; renderSlots(); return;
   }
-  // بررسی موجودی
-  const invErrors = await checkOnlineInventory(items);
-  if(invErrors){
-    errEl.innerHTML='⚠️ موجودی کافی نیست:<br><small style="color:var(--text3)">'+invErrors.join('<br>')+'</small>';
+  const btn=document.getElementById('draft-btn');
+  btn.disabled=true; btn.textContent='⏳ بررسی موجودی...';
+
+  // بررسی موجودی تازه از سرور
+  const invResult = await checkOnlineInventory(items);
+  if(invResult){
+    const { errors, adjustedItems } = invResult;
+    const hasZero = adjustedItems.some(a=>a.maxQty===0);
+    const hasPartial = adjustedItems.some(a=>a.maxQty>0);
+
+    let adjustBtnHtml = '';
+    if(hasPartial && !hasZero){
+      adjustBtnHtml = `<button onclick="autoAdjustAndRetry()" style="margin-top:10px;width:100%;padding:10px;background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.4);border-radius:8px;color:var(--yellow);font-size:13px;font-family:inherit;cursor:pointer;font-weight:600;">🔄 اصلاح خودکار تعداد و ادامه</button>`;
+    } else if(hasZero){
+      adjustBtnHtml = `<button onclick="autoAdjustAndRetry()" style="margin-top:10px;width:100%;padding:10px;background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.4);border-radius:8px;color:var(--yellow);font-size:13px;font-family:inherit;cursor:pointer;font-weight:600;">🔄 اصلاح سفارش (حذف ناموجود + کاهش تعداد)</button>`;
+    }
+
+    errEl.innerHTML = `<div style="background:rgba(244,63,94,.08);border:1px solid rgba(244,63,94,.3);border-radius:10px;padding:12px 14px;">
+      <div style="font-size:13px;font-weight:700;color:var(--red);margin-bottom:8px;">⛔ موجودی کافی نیست — سفارش را اصلاح کنید</div>
+      <div style="font-size:12px;color:var(--text2);line-height:2.2;">${errors.map(e=>'• '+e).join('<br>')}</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:8px;">تعداد را از منو اصلاح کنید یا دکمه زیر را بزنید تا سفارش خودکار اصلاح شود.</div>
+      ${adjustBtnHtml}
+    </div>`;
+    btn.disabled=false; btn.textContent='✅ ثبت سفارش و پرداخت ←';
+    errEl.scrollIntoView({behavior:'smooth',block:'center'});
+    renderMenu();
     return;
   }
 
-  const btn=document.getElementById('draft-btn');
-  btn.disabled=true; btn.textContent='در حال ثبت...';
+  btn.textContent='در حال ثبت...';
   try{
     const {subtotal,discountAmt,total}=updateTotal();
     const slotCode = generateSlotCode(selectedTime);
