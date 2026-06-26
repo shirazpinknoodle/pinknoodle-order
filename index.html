@@ -855,7 +855,8 @@ function renderMenu(){
   el.innerHTML=menu.map(m=>{
     const q=qtyMap[m.id]||0;
     const sauces=sauceMap[m.id]||[];
-    const sauceHtml=q>0?`<div class="sauce-row visible">
+    const isDrink = ['water','soda','lemonade'].includes(m.id) || (m.category && m.category==='drink');
+    const sauceHtml=q>0&&!isDrink?`<div class="sauce-row visible">
       <span class="sauce-label-txt">🥫 سس برای «${m.name}» (تکی یا ترکیبی):</span>
       <div class="sauce-chips">${SAUCES.map(s=>`<span class="sauce-chip ${sauces.includes(s)?'active':''}" onclick="toggleSauce('${m.id}','${s}')">${s}</span>`).join('')}</div>
       ${sauces.length>0?`<span style="font-size:10px;color:var(--pink-light);margin-top:2px;">✓ ${tp(sauces.length)} سس انتخاب شده</span>`:'<span style="font-size:10px;color:var(--text3);margin-top:2px;">می‌توانید چند سس انتخاب کنید</span>'}
@@ -876,6 +877,8 @@ function renderMenu(){
 function changeQty(id,delta){
   qtyMap[id]=Math.max(0,(qtyMap[id]||0)+delta);
   if(!qtyMap[id]) delete sauceMap[id];
+  // نوشیدنی‌ها سس ندارن
+  if(['water','soda','lemonade'].includes(id)) delete sauceMap[id];
   renderMenu();
 }
 function toggleSauce(itemId,sauce){
