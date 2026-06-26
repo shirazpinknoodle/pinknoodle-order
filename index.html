@@ -481,6 +481,101 @@ const SLOT_CAPACITY= 1;
 const SLOT_MIN_AHEAD = 30;
 
 const DISCOUNT_CODES = { 'PINK10':10, 'VIP20':20, 'WELCOME15':15 };
+
+// ══ بررسی موجودی ══
+const ITEM_COST_ONLINE = {
+  'نودل مرغ':        { noodle:1.5, chicken:1, teriyaki_sauce:1, bowl:1 },
+  'نودل گوشت':       { noodle:1.5, beef:1,    teriyaki_sauce:1, bowl:1 },
+  'نودل پنیری':      { noodle:1.5, cheese:1,                    bowl:1 },
+  'نودل خامه‌ای': { noodle:1.5, cream_sauce:1,             bowl:1 },
+  'نودل مرغ پنیری':  { noodle:1.5, chicken:1, cheese:1, teriyaki_sauce:1, bowl:1 },
+  'نودل گوشت پنیری': { noodle:1.5, beef:1,    cheese:1, teriyaki_sauce:1, bowl:1 },
+  'پاستا مرغ':       { pasta:1, chicken:1, cream_sauce:1, bowl:1 },
+  'پاستا گوشت':      { pasta:1, beef:1,    cream_sauce:1, bowl:1 },
+  'آب':              { water:1 },
+  'نوشابه':          { soda:1 },
+  'لیموناد':         { lemonade:1 },
+};
+const INV_KEYS_ONLINE = ['noodle','chicken','beef','cheese','pasta','cream_sauce','teriyaki_sauce','bowl','water','soda','lemonade'];
+const INV_LABELS = {
+  noodle:'نودل', chicken:'مرغ', beef:'گوشت', cheese:'پنیر',
+  pasta:'پاستا', cream_sauce:'سس خامه‌ای', teriyaki_sauce:'سس تریاکی',
+  bowl:'ظرف', water:'آب', soda:'نوشابه', lemonade:'لیموناد'
+};
+
+async function checkOnlineInventory(items){
+  try{
+    // دریافت موجودی روز از Supabase
+    const res = await supaFetch('/rest/v1/settings?key=eq.daily_inventory&select=value');
+    if(!res.ok) return null; // اگه خطا بود، بذار رد بشه
+    const rows = await res.json();
+    if(!rows.length || !rows[0].value) return null;
+    const inv = rows[0].value;
+
+    // بررسی تاریخ موجودی (باید امروز باشه)
+    const todayJalali = getWorkingDayOnline();
+    if(!inv._date || inv._date !== todayJalali) return null; // موجودی ست نشده
+
+    // محاسبه مصرف سفارشات امروز از orders
+    const ordRes = await supaFetch('/rest/v1/orders?date=eq.'+todayJalali+'&select=items');
+    const consumed = {};
+    INV_KEYS_ONLINE.forEach(k => consumed[k] = 0);
+    if(ordRes.ok){
+      const orders = await ordRes.json();
+      orders.forEach(o=>{
+        (Array.isArray(o.items)?o.items:[]).forEach(it=>{
+          const cost = ITEM_COST_ONLINE[it.name];
+          if(!cost) return;
+          INV_KEYS_ONLINE.forEach(k=>{ if(cost[k]) consumed[k] += cost[k]*(it.qty||1); });
+        });
+      });
+    }
+
+    // محاسبه نیاز سفارش جدید
+    const need = {};
+    INV_KEYS_ONLINE.forEach(k => need[k] = 0);
+    items.forEach(it=>{
+      const cost = ITEM_COST_ONLINE[it.name];
+      if(!cost) return;
+      INV_KEYS_ONLINE.forEach(k=>{ if(cost[k]) need[k] += cost[k]*(it.qty||1); });
+    });
+
+    // مقایسه
+    const errors = [];
+    INV_KEYS_ONLINE.forEach(k=>{
+      if(!need[k]) return;
+      const total = (inv[k] !== undefined && inv[k] !== '') ? Number(inv[k]) : null;
+      if(total === null) return; // بدون محدودیت
+      const left = total - (consumed[k]||0);
+      if(need[k] > left){
+        errors.push(`${INV_LABELS[k]}: نیاز ${need[k]} — باقی‌مانده ${Math.max(0,Math.round(left*10)/10)}`);
+      }
+    });
+    return errors.length ? errors : null;
+  } catch(e){ return null; } // در صورت خطا، اجازه بده
+}
+
+function getWorkingDayOnline(){
+  const now = new Date();
+  let target = now;
+  if(now.getHours() < 8){
+    target = new Date(now);
+    target.setDate(target.getDate()-1);
+  }
+  // تبدیل ساده به جلالی
+  let gy=target.getFullYear(),gm=target.getMonth()+1,gd=target.getDate();
+  let gdm=[31,28,31,30,31,30,31,31,30,31,30,31];
+  if(((gy%4===0)&&(gy%100!==0))||(gy%400===0)) gdm[1]=29;
+  let g_y=gy-1600,g_m=gm-1,g_d=gd-1;
+  let gdn=365*g_y+Math.floor((g_y+3)/4)-Math.floor((g_y+99)/100)+Math.floor((g_y+399)/400);
+  for(let i=0;i<g_m;++i) gdn+=gdm[i]; gdn+=g_d;
+  let jdn=gdn-79,jnp=Math.floor(jdn/12053); jdn%=12053;
+  let jy=979+33*jnp+4*Math.floor(jdn/1461); jdn%=1461;
+  if(jdn>=366){jy+=Math.floor((jdn-1)/365);jdn=(jdn-1)%365;}
+  let jm=jdn<186?1+Math.floor(jdn/31):7+Math.floor((jdn-186)/30);
+  let jd=1+(jdn<186?jdn%31:(jdn-186)%30);
+  return `${jy}/${String(jm).padStart(2,'0')}/${String(jd).padStart(2,'0')}`;
+}
 const SAUCES = ['سس تری‌یاکی','سس خامه‌ای صورتی','سس گوجوچانگ تند','سس بادام زمینی'];
 
 // ══════════ state ══════════
@@ -864,6 +959,12 @@ async function saveDraft(){
   if((takenSlots[selectedTime]||0)>=SLOT_CAPACITY){
     errEl.textContent='⛔ متأسفانه این اسلات همین الان پر شد. لطفاً اسلات دیگری انتخاب کن.';
     selectedTime=null; renderSlots(); return;
+  }
+  // بررسی موجودی
+  const invErrors = await checkOnlineInventory(items);
+  if(invErrors){
+    errEl.innerHTML='⚠️ موجودی کافی نیست:<br><small style="color:var(--text3)">'+invErrors.join('<br>')+'</small>';
+    return;
   }
   const btn=document.getElementById('draft-btn');
   btn.disabled=true; btn.textContent='در حال ذخیره...';
