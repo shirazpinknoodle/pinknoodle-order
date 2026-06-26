@@ -172,13 +172,6 @@ body{font-family:Tahoma,sans-serif;background:var(--bg);color:var(--text);min-he
   <div class="hint">در حال بارگذاری...</div>
 </div>
 
-<!-- بنر debug موجودی — فقط وقتی stock در Supabase خالی باشد نشان داده می‌شود -->
-<div id="stock-debug-banner" style="display:none;background:rgba(244,63,94,.15);border:1.5px solid rgba(244,63,94,.5);border-radius:12px;margin:12px 16px;padding:14px 16px;font-size:12px;color:var(--red);line-height:2;">
-  ⚠️ <strong>فیلد stock در جدول menu خالی است</strong><br>
-  برای فعال شدن محدودیت موجودی، باید در Supabase برای هر آیتم مقدار عددی در ستون <code>stock</code> وارد کنید.<br>
-  <span style="color:var(--text3);">مثال: stock = 5 یعنی فقط ۵ عدد قابل سفارش است. stock = 0 یعنی تمام شده. stock = null یعنی بدون محدودیت.</span>
-</div>
-
 <!-- هدر -->
 <div id="main-header" class="header" style="display:none;">
   <div class="brand">Pink<span> Noodle</span></div>
@@ -219,6 +212,13 @@ body{font-family:Tahoma,sans-serif;background:var(--bg);color:var(--text);min-he
 <div id="order-screen" style="display:none;">
   <div class="section">
     <button class="back-btn" onclick="showLanding()">← بازگشت</button>
+    <div class="card" style="padding:12px 16px;">
+      <div style="font-size:12px;color:var(--text3);margin-bottom:10px;">مرحله ۱ از ۲ — انتخاب سفارش</div>
+      <div class="step-bar">
+        <div class="step done"><div class="step-dot">۱</div><div class="step-label">انتخاب سفارش</div></div>
+        <div class="step"><div class="step-dot">۲</div><div class="step-label">پرداخت</div></div>
+      </div>
+    </div>
   </div>
 
   <!-- منو -->
@@ -335,8 +335,11 @@ body{font-family:Tahoma,sans-serif;background:var(--bg);color:var(--text);min-he
   <!-- دکمه -->
   <div class="section">
     <div class="card">
+      <div class="alert-info" style="margin-bottom:12px;">
+        📌 پس از ثبت اولیه، می‌تونی از صفحه اصلی با شماره‌ات برگردی و پرداخت رو تکمیل کنی.
+      </div>
       <div class="err" id="form-error"></div>
-      <button class="btn-primary" id="draft-btn" onclick="saveDraft()">✅ ثبت سفارش و پرداخت ←</button>
+      <button class="btn-primary" id="draft-btn" onclick="saveDraft()">ثبت سفارش و رفتن به پرداخت ←</button>
     </div>
   </div>
 
@@ -350,6 +353,13 @@ body{font-family:Tahoma,sans-serif;background:var(--bg);color:var(--text);min-he
 <div id="payment-screen" style="display:none;">
   <div class="section">
     <button class="back-btn" onclick="showLanding()">← بازگشت</button>
+    <div class="card" style="padding:12px 16px;">
+      <div style="font-size:12px;color:var(--text3);margin-bottom:10px;">مرحله ۲ از ۲ — پرداخت</div>
+      <div class="step-bar">
+        <div class="step done"><div class="step-dot">✓</div><div class="step-label">انتخاب سفارش</div></div>
+        <div class="step active"><div class="step-dot">۲</div><div class="step-label">پرداخت</div></div>
+      </div>
+    </div>
   </div>
 
   <div class="section">
@@ -471,90 +481,12 @@ const SLOT_CAPACITY= 1;
 const SLOT_MIN_AHEAD = 30;
 
 const DISCOUNT_CODES = { 'PINK10':10, 'VIP20':20, 'WELCOME15':15 };
-
-// ══ بررسی موجودی — مستقیم از فیلد stock جدول menu ══
-// stock فیلد عددی در جدول menu است (null = بدون محدودیت، 0 = تمام شده)
-// این تابع موجودی تازه از Supabase می‌گیره، itemMaxMap رو بروز می‌کنه
-// و لیست آیتم‌های مشکل‌دار را برمی‌گرداند
-async function checkOnlineInventory(items){
-  // دریافت تازه‌ترین موجودی از menu
-  let freshMenuStock = {}; // { itemId: stock }
-  const res = await supaFetch('/rest/v1/menu?select=id,name,stock');
-  if(res.ok){
-    const rows = await res.json();
-    rows.forEach(r=>{
-      freshMenuStock[r.id] = r.stock;
-      // بروزرسانی itemMaxMap با داده تازه
-      if(r.stock === null || r.stock === undefined){
-        itemMaxMap[r.id] = 99;
-      } else {
-        itemMaxMap[r.id] = Math.max(0, Number(r.stock)||0);
-      }
-    });
-  } else {
-    return { errors: ['خطا در بررسی موجودی. لطفاً دوباره تلاش کنید.'], adjustedItems: null };
-  }
-
-  // بررسی هر آیتم و ساخت لیست مشکل‌دار
-  const errors = [];
-  const adjustedItems = []; // آیتم‌هایی که باید کاهش یابند
-
-  items.forEach(it=>{
-    const stock = freshMenuStock[it.itemId];
-    if(stock === null || stock === undefined) return; // بدون محدودیت
-    const stockNum = Number(stock);
-    if(isNaN(stockNum)) return;
-    if(it.qty > stockNum){
-      if(stockNum <= 0){
-        errors.push(`«${it.name}» تمام شده است`);
-        adjustedItems.push({ itemId: it.itemId, name: it.name, currentQty: it.qty, maxQty: 0 });
-      } else {
-        errors.push(`«${it.name}»: شما ${tp(it.qty)} عدد انتخاب کردید ولی فقط ${tp(stockNum)} عدد موجود است`);
-        adjustedItems.push({ itemId: it.itemId, name: it.name, currentQty: it.qty, maxQty: stockNum });
-      }
-    }
-  });
-  return errors.length ? { errors, adjustedItems } : null;
-}
-
-// ══ اعمال خودکار تعداد بر اساس موجودی واقعی ══
-function applyInventoryAdjustments(adjustedItems){
-  adjustedItems.forEach(adj=>{
-    qtyMap[adj.itemId] = adj.maxQty;
-    if(adj.maxQty === 0) delete sauceMap[adj.itemId];
-  });
-  renderMenu();
-}
-
-// ══ اصلاح خودکار سفارش و تلاش دوباره ══
-async function autoAdjustAndRetry(){
-  const errEl=document.getElementById('form-error');
-  errEl.textContent='';
-  const items=menu.filter(m=>(qtyMap[m.id]||0)>0).map(m=>({
-    itemId:m.id,name:m.name,qty:qtyMap[m.id],unitPrice:Number(m.price),sauces:sauceMap[m.id]||[]
-  }));
-  const invResult = await checkOnlineInventory(items);
-  if(invResult && invResult.adjustedItems){
-    applyInventoryAdjustments(invResult.adjustedItems);
-    // اسکرول به بالای منو
-    document.getElementById('menu-list').scrollIntoView({behavior:'smooth',block:'start'});
-    // پیام موفقیت اصلاح
-    const newItems=menu.filter(m=>(qtyMap[m.id]||0)>0);
-    if(!newItems.length){
-      errEl.innerHTML='<div style="background:rgba(244,63,94,.08);border:1px solid rgba(244,63,94,.3);border-radius:10px;padding:12px 14px;color:var(--red);font-size:13px;">⛔ همه آیتم‌های انتخابی تمام شده‌اند. لطفاً آیتم دیگری انتخاب کنید.</div>';
-    } else {
-      errEl.innerHTML='<div style="background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.3);border-radius:10px;padding:10px 14px;color:var(--green);font-size:12px;">✓ سفارش شما بر اساس موجودی فعلی اصلاح شد. بررسی کنید و دوباره ثبت نمایید.</div>';
-    }
-  }
-}
-
 const SAUCES = ['سس تری‌یاکی','سس خامه‌ای صورتی','سس گوجوچانگ تند','سس بادام زمینی'];
 
 // ══════════ state ══════════
 let menu         = [];
 let qtyMap       = {};
 let sauceMap     = {};
-let itemMaxMap   = {}; // { itemId: maxQty } — حداکثر مجاز بر اساس موجودی
 let deliveryType = 'pickup';
 let selectedFile = null;
 let discountPct  = 0;
@@ -564,33 +496,9 @@ let currentDraftId = null;
 let lastPhone    = '';
 let lastTrackCode = '';
 let takenSlots   = {};
+let itemStockMap = {};   // حداکثر تعداد هر آیتم بر اساس موجودی صندوق
 
 // ══════════ ابزارها ══════════
-
-// تبدیل تاریخ میلادی به جلالی (ساده)
-function toJalaliSimple(date){
-  let gy=date.getFullYear(),gm=date.getMonth()+1,gd=date.getDate();
-  let gdm=[31,28,31,30,31,30,31,31,30,31,30,31];
-  if(((gy%4===0)&&(gy%100!==0))||(gy%400===0)) gdm[1]=29;
-  let g_y=gy-1600,g_m=gm-1,g_d=gd-1;
-  let gdn=365*g_y+Math.floor((g_y+3)/4)-Math.floor((g_y+99)/100)+Math.floor((g_y+399)/400);
-  for(let i=0;i<g_m;++i) gdn+=gdm[i]; gdn+=g_d;
-  let jdn=gdn-79,jnp=Math.floor(jdn/12053); jdn%=12053;
-  let jy=979+33*jnp+4*Math.floor(jdn/1461); jdn%=1461;
-  if(jdn>=366){jy+=Math.floor((jdn-1)/365);jdn=(jdn-1)%365;}
-  let jm=jdn<186?1+Math.floor(jdn/31):7+Math.floor((jdn-186)/30);
-  let jd=1+(jdn<186?jdn%31:(jdn-186)%30);
-  return String(jy).slice(-2)+String(jm).padStart(2,'0')+String(jd).padStart(2,'0');
-}
-
-// تولید کد منحصربه‌فرد اسلات: مثال ۱۴۰۴۰۳۱۵-۲۰۱۵
-function generateSlotCode(slotTime){
-  const now = new Date();
-  const jalali = toJalaliSimple(now);
-  const timeStr = (slotTime||'').replace(':','');
-  return jalali + '-' + timeStr;
-}
-
 function normalizePhone(s){
   s=String(s||'');
   s=s.replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d));
@@ -623,17 +531,64 @@ function showTrack(){
   showScreen('track-screen');
   if(lastPhone) document.getElementById('track-phone').value=lastPhone;
 }
-async function goToOrder(){
+function goToOrder(){
   showScreen('order-screen');
   loadSlots(false);
-  // بروزرسانی موجودی در هنگام ورود به صفحه سفارش
-  await loadInventoryLimits();
-  renderMenu();
 }
 function goToTrackAfterSuccess(){
   document.getElementById('track-phone').value=lastPhone;
   showScreen('track-screen');
   trackOrders();
+}
+
+// ══════════ موجودی real-time از صندوق (Supabase settings.daily_inventory) ══════════
+// نگاشت مصرف مواد اولیه به ازای هر آیتم منو (باید با صندوق یکسان باشد)
+const ITEM_COST = {
+  'نودل مرغ':        { noodle:1.5, chicken:1, teriyaki_sauce:1, bowl:1 },
+  'نودل گوشت':       { noodle:1.5, beef:1,    teriyaki_sauce:1, bowl:1 },
+  'نودل پنیری':      { noodle:1.5, cheese:1,                    bowl:1 },
+  'نودل خامه‌ای':    { noodle:1.5, cream_sauce:1,               bowl:1 },
+  'نودل مرغ پنیری':  { noodle:1.5, chicken:1, cheese:1, teriyaki_sauce:1, bowl:1 },
+  'نودل گوشت پنیری': { noodle:1.5, beef:1,    cheese:1, teriyaki_sauce:1, bowl:1 },
+  'پاستا مرغ':       { pasta:1, chicken:1, cream_sauce:1, bowl:1 },
+  'پاستا گوشت':      { pasta:1, beef:1,    cream_sauce:1, bowl:1 },
+  'آب':              { water:1 },
+  'نوشابه':          { soda:1 },
+  'لیموناد':         { lemonade:1 },
+};
+const INV_KEYS = ['noodle','chicken','beef','cheese','pasta','cream_sauce','teriyaki_sauce','bowl','water','soda','lemonade'];
+
+async function loadInventory(){
+  itemStockMap={};
+  itemSoldMap={};
+  try{
+    // خواندن موجودی مواد اولیه از صندوق
+    const res=await supaFetch('/rest/v1/settings?key=eq.daily_inventory&select=value',{headers:{'Accept':'application/json'}});
+    if(!res.ok) return;
+    const rows=await res.json();
+    if(!rows||!rows.length) return;
+    const inv=JSON.parse(rows[0].value||'{}');
+    // محاسبه حداکثر تعداد هر آیتم منو بر اساس موجودی مواد
+    menu.forEach(m=>{
+      const cost=ITEM_COST[m.name];
+      if(!cost){ itemStockMap[m.id]=99; return; } // آیتمی که ITEM_COST نداره = بی‌محدودیت
+      let maxQty=99;
+      INV_KEYS.forEach(k=>{
+        if(!cost[k]) return;
+        const available=inv[k]!==undefined&&inv[k]!==''?Number(inv[k]):null;
+        if(available===null) return; // این ماده بدون محدودیت
+        const possible=Math.floor(available/cost[k]);
+        if(possible<maxQty) maxQty=possible;
+      });
+      itemStockMap[m.id]=Math.max(0,maxQty);
+    });
+  } catch(e){ console.warn('[Inventory]',e); }
+}
+
+function getAvailableQty(menuId){
+  const stock=itemStockMap[menuId];
+  if(stock===undefined||stock===99) return 99;
+  return Math.max(0,stock);
 }
 
 // ══════════ تولید لیست اسلات‌ها ══════════
@@ -650,63 +605,32 @@ function generateAllSlots(){
 
 // ══════════ گرفتن اسلات‌های پر از Supabase ══════════
 async function fetchTakenSlots(){
-  const now = new Date().toISOString();
-  const validSlots = new Set(generateAllSlots());
-  const taken = {};
-
-  // query 1: سفارش‌های تأیید/در حال پردازش — همیشه پر
-  const r1 = await supaFetch(
-    '/rest/v1/online_orders?select=delivery_time,status,reserved_until,slot_code&status=in.(pending,confirmed,preparing,ready,approved)',
+  const res=await supaFetch(
+    '/rest/v1/online_orders?select=delivery_time'+
+    '&status=in.(draft,pending,confirmed,preparing,ready)',
     {headers:{'Accept':'application/json'}}
   );
-  console.log('[Slots Q1] status:', r1.status);
-  if(r1.ok){
-    const rows1 = await r1.json();
-    console.log('[Slots Q1] rows:', rows1);
-    rows1.forEach(r=>{
-      if(!r.delivery_time) return;
-      const t = String(r.delivery_time).substring(0,5);
-      if(!validSlots.has(t)) return;
-      taken[t] = (taken[t]||0) + 1;
-    });
-  }
-
-  // query 2: draft هایی که هنوز رزرو موقتشان نگذشته
-  const r2 = await supaFetch(
-    '/rest/v1/online_orders?select=delivery_time,status,reserved_until,slot_code&status=eq.draft&reserved_until=gt.'+encodeURIComponent(now),
-    {headers:{'Accept':'application/json'}}
-  );
-  console.log('[Slots Q2] status:', r2.status);
-  if(r2.ok){
-    const rows2 = await r2.json();
-    console.log('[Slots Q2] rows:', rows2);
-    rows2.forEach(r=>{
-      if(!r.delivery_time) return;
-      const t = String(r.delivery_time).substring(0,5);
-      if(!validSlots.has(t)) return;
-      taken[t] = (taken[t]||0) + 1;
-    });
-  }
-
-  console.log('[Slots] taken:', taken);
+  if(!res.ok) throw new Error('server '+res.status);
+  const rows=await res.json();
+  const taken={};
+  // فقط اسلات‌های امشب رو حساب کن
+  const validSlots=new Set(generateAllSlots());
+  rows.forEach(r=>{
+    if(!r.delivery_time) return;
+    const t=String(r.delivery_time).substring(0,5);
+    if(!validSlots.has(t)) return; // فقط اسلات‌های همین شب
+    taken[t]=(taken[t]||0)+1;
+  });
   return taken;
 }
 
 // ══════════ بارگذاری اسلات‌های پر از Supabase ══════════
-let _slotAutoRefreshTimer = null;
-
 async function loadSlots(showRefreshAnim){
   const container=document.getElementById('slots-container');
   const refreshBtn=document.getElementById('slot-refresh-btn');
   if(showRefreshAnim&&refreshBtn){
     refreshBtn.innerHTML='<span class="spinner-sm"></span> در حال بروزرسانی...';
     refreshBtn.disabled=true;
-  }
-  // auto-refresh هر ۳۰ ثانیه تا اسلات‌های رزرو موقت منقضی‌شده آزاد بشن
-  if(!_slotAutoRefreshTimer){
-    _slotAutoRefreshTimer = setInterval(async()=>{
-      try{ takenSlots=await fetchTakenSlots(); renderSlots(); } catch(e){}
-    }, 30000);
   }
   try{
     takenSlots=await fetchTakenSlots();
@@ -741,12 +665,9 @@ function renderSlots(){
     else if(isTaken){cls+=' slot-taken';statusTxt='🔴 پر شده';disabled='disabled';}
     else{cls+=' slot-free';statusTxt='خالی';}
     const displayTime=tp(String(sh).padStart(2,'0'))+':'+tp(String(sm).padStart(2,'0'));
-    const slotCode=generateSlotCode(slotTime);
-    const slotCodeDisplay=tp(slotCode);
     html+=`<button type="button" class="${cls}" ${disabled} onclick="selectSlot('${slotTime}')" ${isPast||isTaken?'':'style="cursor:pointer;"'}>
       <div class="slot-time">${displayTime}</div>
       <div class="slot-status">${statusTxt}</div>
-      ${!isPast&&!isTaken?`<div style="font-size:8px;color:rgba(255,255,255,.35);margin-top:1px;letter-spacing:.5px;">${slotCodeDisplay}</div>`:''}
     </button>`;
   });
   html+='</div>';
@@ -821,36 +742,9 @@ async function loadMenu(){
     showScreen('empty-state');
     return;
   }
-  // بارگذاری موجودی و محاسبه سقف هر آیتم
-  await loadInventoryLimits();
+  await loadInventory();
   renderMenu();
   showScreen('landing-screen');
-}
-
-// ══════════ بارگذاری سقف موجودی هر آیتم از فیلد stock جدول menu ══════════
-async function loadInventoryLimits(){
-  itemMaxMap = {};
-  try{
-    const res = await supaFetch('/rest/v1/menu?select=id,name,stock');
-    if(!res.ok){ console.warn('[Stock] API error:', res.status); return; }
-    const rows = await res.json();
-    console.log('[Stock] raw data from Supabase:', JSON.stringify(rows));
-    rows.forEach(r=>{
-      if(r.stock === null || r.stock === undefined){
-        itemMaxMap[r.id] = 99;
-      } else {
-        itemMaxMap[r.id] = Math.max(0, Number(r.stock)||0);
-      }
-    });
-    console.log('[Stock] itemMaxMap:', JSON.stringify(itemMaxMap));
-    // نمایش بنر debug در صفحه
-    const hasStock = rows.some(r=> r.stock !== null && r.stock !== undefined);
-    if(!hasStock){
-      console.warn('[Stock] ⚠️ همه آیتم‌ها stock=null دارند — فیلد stock در Supabase خالی است!');
-      const banner = document.getElementById('stock-debug-banner');
-      if(banner) banner.style.display='block';
-    }
-  } catch(e){ console.error('[Stock] exception:', e); }
 }
 
 // ══════════ رندر منو ══════════
@@ -859,39 +753,22 @@ function renderMenu(){
   el.innerHTML=menu.map(m=>{
     const q=qtyMap[m.id]||0;
     const sauces=sauceMap[m.id]||[];
-    const maxQty = (itemMaxMap[m.id] !== undefined) ? itemMaxMap[m.id] : 99;
-    const isOutOfStock = maxQty <= 0;
-    const isAtMax = q >= maxQty;
-    const isDrink = ['water','soda','lemonade'].includes(m.id) || (m.category && m.category==='drink');
-
-    // نشانگر موجودی
-    let stockBadge = '';
-    if(isOutOfStock){
-      stockBadge = `<span style="font-size:10px;background:rgba(244,63,94,.12);border:1px solid rgba(244,63,94,.3);color:var(--red);border-radius:20px;padding:2px 8px;margin-right:6px;">تمام شد</span>`;
-    } else if(maxQty <= 3 && maxQty < 99){
-      stockBadge = `<span style="font-size:10px;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.25);color:var(--yellow);border-radius:20px;padding:2px 8px;margin-right:6px;">فقط ${tp(maxQty)} عدد</span>`;
-    }
-
-    const sauceHtml=q>0&&!isDrink&&!isOutOfStock?`<div class="sauce-row visible">
+    const sauceHtml=q>0?`<div class="sauce-row visible">
       <span class="sauce-label-txt">🥫 سس برای «${m.name}» (تکی یا ترکیبی):</span>
       <div class="sauce-chips">${SAUCES.map(s=>`<span class="sauce-chip ${sauces.includes(s)?'active':''}" onclick="toggleSauce('${m.id}','${s}')">${s}</span>`).join('')}</div>
       ${sauces.length>0?`<span style="font-size:10px;color:var(--pink-light);margin-top:2px;">✓ ${tp(sauces.length)} سس انتخاب شده</span>`:'<span style="font-size:10px;color:var(--text3);margin-top:2px;">می‌توانید چند سس انتخاب کنید</span>'}
     </div>`:'';
-
-    const plusDisabled = isOutOfStock || isAtMax ? 'disabled style="opacity:.35;cursor:not-allowed;"' : '';
-    const minusDisabled = q <= 0 ? 'disabled style="opacity:.35;cursor:not-allowed;"' : '';
-    const itemOpacity = isOutOfStock ? 'opacity:.5;' : '';
-
-    return `<div class="menu-item" style="${itemOpacity}">
+    const avail=getAvailableQty(m.id);
+    const outOfStock=avail<=0;
+    const atMax=q>=avail;
+    const stockBadge=avail<99&&avail>=0?`<span style="font-size:10px;color:${avail===0?'var(--red)':avail<=3?'var(--yellow)':'var(--text3)'};margin-right:6px;">${avail===0?'ناموجود':'موجودی: '+tp(avail)}</span>`:'';
+    return `<div class="menu-item" style="${outOfStock?'opacity:.5;':''}">
       <div class="mi-row">
-        <div>
-          <div class="mi-name">${m.name} ${stockBadge}</div>
-          <div class="mi-price">${fmt(m.price)} تومان</div>
-        </div>
+        <div><div class="mi-name">${m.name}</div><div class="mi-price">${fmt(m.price)} تومان ${stockBadge}</div></div>
         <div class="qty-ctrl">
-          <button class="qty-btn" onclick="changeQty('${m.id}',-1)" ${minusDisabled}>−</button>
+          <button class="qty-btn" onclick="changeQty('${m.id}',-1)" ${q<=0?'disabled':''}>−</button>
           <span class="qty-val">${tp(q)}</span>
-          <button class="qty-btn" onclick="changeQty('${m.id}',1)" ${plusDisabled}>+</button>
+          <button class="qty-btn" onclick="changeQty('${m.id}',1)" ${atMax||outOfStock?'disabled style="opacity:.35;cursor:not-allowed;"':''}>+</button>
         </div>
       </div>${sauceHtml}
     </div>`;
@@ -899,11 +776,10 @@ function renderMenu(){
   updateTotal();
 }
 function changeQty(id,delta){
-  const maxQty = (itemMaxMap[id] !== undefined) ? itemMaxMap[id] : 99;
-  const newQty = Math.max(0, Math.min(maxQty, (qtyMap[id]||0)+delta));
-  qtyMap[id] = newQty;
+  const avail=getAvailableQty(id);
+  const newQty=Math.max(0,Math.min(avail,(qtyMap[id]||0)+delta));
+  qtyMap[id]=newQty;
   if(!qtyMap[id]) delete sauceMap[id];
-  if(['water','soda','lemonade'].includes(id)) delete sauceMap[id];
   renderMenu();
 }
 function toggleSauce(itemId,sauce){
@@ -962,7 +838,7 @@ function setDelivery(type){
   document.getElementById('address-wrap').style.display=type==='delivery'?'block':'none';
 }
 
-// ══════════ ثبت سفارش مستقیم (بدون مرحله draft جداگانه) ══════════
+// ══════════ ذخیره سفارش (مرحله ۱) ══════════
 async function saveDraft(){
   const errEl=document.getElementById('form-error'); errEl.textContent='';
   const name=(document.getElementById('cust-name').value||'').trim();
@@ -976,79 +852,54 @@ async function saveDraft(){
   if(!items.length){errEl.textContent='حداقل یک غذا از منو انتخاب کنید';return;}
   if(deliveryType==='delivery'&&!address){errEl.textContent='آدرس را برای تحویل درب منزل وارد کنید';return;}
   if(!selectedTime){errEl.textContent='لطفاً یک اسلات زمانی خالی انتخاب کنید';return;}
-
-  // بررسی اسلات هنوز در آینده
+  // بررسی اینکه اسلات هنوز در آینده باشه
   const [chk_h,chk_m]=selectedTime.split(':').map(Number);
   const chkNow=new Date(); const chkNowMin=chkNow.getHours()*60+chkNow.getMinutes();
   if(chk_h*60+chk_m<chkNowMin+SLOT_MIN_AHEAD){
     errEl.textContent='⛔ این اسلات گذشته است. لطفاً اسلات دیگری انتخاب کن.';
     selectedTime=null; renderSlots(); return;
   }
-  // بررسی ظرفیت اسلات
   try{ takenSlots=await fetchTakenSlots(); } catch(e){}
   if((takenSlots[selectedTime]||0)>=SLOT_CAPACITY){
     errEl.textContent='⛔ متأسفانه این اسلات همین الان پر شد. لطفاً اسلات دیگری انتخاب کن.';
     selectedTime=null; renderSlots(); return;
   }
   const btn=document.getElementById('draft-btn');
-  btn.disabled=true; btn.textContent='⏳ بررسی موجودی...';
-
-  // بررسی موجودی تازه از سرور
-  const invResult = await checkOnlineInventory(items);
-  if(invResult){
-    const { errors, adjustedItems } = invResult;
-    const hasZero = adjustedItems.some(a=>a.maxQty===0);
-    const hasPartial = adjustedItems.some(a=>a.maxQty>0);
-
-    let adjustBtnHtml = '';
-    if(hasPartial && !hasZero){
-      adjustBtnHtml = `<button onclick="autoAdjustAndRetry()" style="margin-top:10px;width:100%;padding:10px;background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.4);border-radius:8px;color:var(--yellow);font-size:13px;font-family:inherit;cursor:pointer;font-weight:600;">🔄 اصلاح خودکار تعداد و ادامه</button>`;
-    } else if(hasZero){
-      adjustBtnHtml = `<button onclick="autoAdjustAndRetry()" style="margin-top:10px;width:100%;padding:10px;background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.4);border-radius:8px;color:var(--yellow);font-size:13px;font-family:inherit;cursor:pointer;font-weight:600;">🔄 اصلاح سفارش (حذف ناموجود + کاهش تعداد)</button>`;
-    }
-
-    errEl.innerHTML = `<div style="background:rgba(244,63,94,.08);border:1px solid rgba(244,63,94,.3);border-radius:10px;padding:12px 14px;">
-      <div style="font-size:13px;font-weight:700;color:var(--red);margin-bottom:8px;">⛔ موجودی کافی نیست — سفارش را اصلاح کنید</div>
-      <div style="font-size:12px;color:var(--text2);line-height:2.2;">${errors.map(e=>'• '+e).join('<br>')}</div>
-      <div style="font-size:11px;color:var(--text3);margin-top:8px;">تعداد را از منو اصلاح کنید یا دکمه زیر را بزنید تا سفارش خودکار اصلاح شود.</div>
-      ${adjustBtnHtml}
-    </div>`;
-    btn.disabled=false; btn.textContent='✅ ثبت سفارش و پرداخت ←';
-    errEl.scrollIntoView({behavior:'smooth',block:'center'});
-    renderMenu();
-    return;
-  }
-
-  btn.textContent='در حال ثبت...';
+  btn.disabled=true; btn.textContent='در حال ذخیره...';
   try{
     const {subtotal,discountAmt,total}=updateTotal();
-    const slotCode = generateSlotCode(selectedTime);
-    const reservedUntil = new Date(Date.now() + 5*60*1000).toISOString();
     const body={
       customer_name:name||null,customer_phone:phone,items,total,subtotal,
       discount_code:discountCode||null,discount_pct:discountPct||null,discount_amt:discountAmt||null,
       note:note||null,delivery_type:deliveryType,
       address:deliveryType==='delivery'?address:null,
-      delivery_time:selectedTime,status:'draft',
-      slot_code:slotCode,
-      reserved_until:reservedUntil
+      delivery_time:selectedTime,status:'draft'
     };
-    const res=await supaFetch('/rest/v1/online_orders',{
-      method:'POST',headers:{'Content-Type':'application/json','Prefer':'return=representation'},body:JSON.stringify(body)
-    });
+    let res;
+    if(currentDraftId){
+      res=await supaFetch('/rest/v1/online_orders?id=eq.'+currentDraftId,{
+        method:'PATCH',headers:{'Content-Type':'application/json','Prefer':'return=representation'},body:JSON.stringify(body)
+      });
+    } else {
+      res=await supaFetch('/rest/v1/online_orders',{
+        method:'POST',headers:{'Content-Type':'application/json','Prefer':'return=representation'},body:JSON.stringify(body)
+      });
+    }
     if(!res.ok) throw new Error('server '+res.status+': '+(await res.text().catch(()=>'')));
     const data=await res.json();
     const saved=Array.isArray(data)?data[0]:data;
-    const trackCode = slotCode;
-    const trackCodeDisplay = tp(trackCode);
-    lastTrackCode = trackCode;
+    const trackCode=(()=>{const month=String(new Date().getMonth()+1).padStart(2,'0');const time=(selectedTime||'').replace(':','');return month+time;})();
+    const trackCodeDisplay=tp(trackCode);
+    lastTrackCode=trackCode;
     currentDraftId=saved?.id; lastPhone=phone;
+    // اسلات رو فوری در حافظه لوکال پر کن تا بقیه نتونن همزمان بگیرن
     if(selectedTime){ takenSlots[selectedTime]=(takenSlots[selectedTime]||0)+1; }
+    loadInventory().then(()=>renderMenu()).catch(()=>{});
     showPaymentScreen(saved,items,{subtotal,discountAmt,total,discountCode,discountPct,time:selectedTime,deliveryType,address,name,phone,trackCode,trackCodeDisplay});
   } catch(e){
     console.error(e);
-    errEl.textContent='خطا در ثبت. اتصال اینترنت رو بررسی کن.';
-    btn.disabled=false; btn.textContent='✅ ثبت سفارش و پرداخت ←';
+    errEl.textContent='خطا در ذخیره. اتصال اینترنت رو بررسی کن.';
+    btn.disabled=false; btn.textContent='ثبت سفارش و رفتن به پرداخت ←';
   }
 }
 
