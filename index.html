@@ -552,6 +552,27 @@ function generateAllSlots(){
   return slots;
 }
 
+// ══════════ گرفتن اسلات‌های پر از Supabase ══════════
+async function fetchTakenSlots(){
+  const res=await supaFetch(
+    '/rest/v1/online_orders?select=delivery_time'+
+    '&status=in.(draft,pending,confirmed,preparing,ready)',
+    {headers:{'Accept':'application/json'}}
+  );
+  if(!res.ok) throw new Error('server '+res.status);
+  const rows=await res.json();
+  const taken={};
+  // فقط اسلات‌های امشب رو حساب کن
+  const validSlots=new Set(generateAllSlots());
+  rows.forEach(r=>{
+    if(!r.delivery_time) return;
+    const t=String(r.delivery_time).substring(0,5);
+    if(!validSlots.has(t)) return; // فقط اسلات‌های همین شب
+    taken[t]=(taken[t]||0)+1;
+  });
+  return taken;
+}
+
 // ══════════ بارگذاری اسلات‌های پر از Supabase ══════════
 async function loadSlots(showRefreshAnim){
   const container=document.getElementById('slots-container');
@@ -561,26 +582,7 @@ async function loadSlots(showRefreshAnim){
     refreshBtn.disabled=true;
   }
   try{
-    // فقط اسلات‌های امروز - delivery_time شامل ساعت‌های امشبه
-    const slotStart=String(SLOT_START_H).padStart(2,'0')+':'+String(SLOT_START_M).padStart(2,'0');
-    const slotEnd=String(SLOT_END_H).padStart(2,'0')+':'+String(SLOT_END_M).padStart(2,'0');
-    const res=await supaFetch(
-      '/rest/v1/online_orders?select=delivery_time'+
-      '&delivery_time=gte.'+slotStart+
-      '&delivery_time=lte.'+slotEnd+
-      '&status=in.(draft,pending,confirmed,preparing,ready)'+
-      '&order=delivery_time.asc',
-      {headers:{'Accept':'application/json'}}
-    );
-    if(!res.ok) throw new Error('server '+res.status);
-    const rows=await res.json();
-    const taken={};
-    rows.forEach(r=>{
-      if(!r.delivery_time) return;
-      const t=String(r.delivery_time).substring(0,5);
-      taken[t]=(taken[t]||0)+1;
-    });
-    takenSlots=taken;
+    takenSlots=await fetchTakenSlots();
     renderSlots();
     const now=new Date();
     document.getElementById('last-refresh-txt').textContent=
@@ -643,26 +645,7 @@ async function selectSlot(slotTime){
   const refreshBtn=document.getElementById('slot-refresh-btn');
   if(refreshBtn){refreshBtn.disabled=true;}
   try{
-    const slotStart2=String(SLOT_START_H).padStart(2,'0')+':'+String(SLOT_START_M).padStart(2,'0');
-    const slotEnd2=String(SLOT_END_H).padStart(2,'0')+':'+String(SLOT_END_M).padStart(2,'0');
-    const res=await supaFetch(
-      '/rest/v1/online_orders?select=delivery_time'+
-      '&delivery_time=gte.'+slotStart2+
-      '&delivery_time=lte.'+slotEnd2+
-      '&status=in.(draft,pending,confirmed,preparing,ready)'+
-      '&order=delivery_time.asc',
-      {headers:{'Accept':'application/json'}}
-    );
-    if(res.ok){
-      const rows=await res.json();
-      const taken={};
-      rows.forEach(r=>{
-        if(!r.delivery_time) return;
-        const t=String(r.delivery_time).substring(0,5);
-        taken[t]=(taken[t]||0)+1;
-      });
-      takenSlots=taken;
-    }
+    takenSlots=await fetchTakenSlots();
   } catch(e){ /* اگر خطا بود از کش قبلی استفاده میکنیم */ }
   finally{
     if(refreshBtn){refreshBtn.disabled=false;}
@@ -818,7 +801,7 @@ async function saveDraft(){
     errEl.textContent='⛔ این اسلات گذشته است. لطفاً اسلات دیگری انتخاب کن.';
     selectedTime=null; renderSlots(); return;
   }
-  await loadSlots(false);
+  try{ takenSlots=await fetchTakenSlots(); } catch(e){}
   if((takenSlots[selectedTime]||0)>=SLOT_CAPACITY){
     errEl.textContent='⛔ متأسفانه این اسلات همین الان پر شد. لطفاً اسلات دیگری انتخاب کن.';
     selectedTime=null; renderSlots(); return;
