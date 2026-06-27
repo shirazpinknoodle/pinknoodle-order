@@ -1216,13 +1216,13 @@ function startTrackPolling(phone){
           lastTrackedStatuses[o.id]=o.status;
         }
       });
-      if(anyChanged){
-        document.getElementById('track-results').innerHTML=orders.map(o=>renderOrderCard(o)).join('');
-      }
-      const hasActive=orders.some(o=>['pending','confirmed','preparing'].includes(o.status));
+      // همیشه UI را آپدیت کن (نه فقط وقتی تغییر داشت)
+      document.getElementById('track-results').innerHTML=orders.map(o=>renderOrderCard(o)).join('');
+      // polling را فقط وقتی همه سفارش‌ها به حالت نهایی رسیدند متوقف کن
+      const hasActive=orders.some(o=>!['ready','rejected','cancelled'].includes(o.status));
       if(!hasActive) stopTrackPolling();
     } catch(e){ /* silent */ }
-  }, 8000);
+  }, 5000);
 }
 
 function showStatusChangeNotif(o){
@@ -1244,12 +1244,15 @@ function showStatusChangeNotif(o){
 
 function renderOrderCard(o){
   const statusMap={
-    draft:{label:'پیش‌نویس — پرداخت نشده',cls:'status-draft',icon:'📝',steps:[1,0,0,0]},
-    pending:{label:'در انتظار تأیید',cls:'status-pending',icon:'⏳',steps:[1,1,0,0]},
-    confirmed:{label:'تأیید شد',cls:'status-confirmed',icon:'✅',steps:[1,1,1,0]},
-    preparing:{label:'در حال آماده‌سازی',cls:'status-preparing',icon:'👨‍🍳',steps:[1,1,1,0]},
-    ready:{label:'آماده تحویل',cls:'status-ready',icon:'🎉',steps:[1,1,1,1]},
-    rejected:{label:'رد شد',cls:'status-rejected',icon:'❌',steps:[1,0,0,0]}
+    draft:     {label:'پیش‌نویس — پرداخت نشده', cls:'status-draft',     icon:'📝', steps:[1,0,0,0]},
+    pending:   {label:'در انتظار تأیید',          cls:'status-pending',   icon:'⏳', steps:[1,1,0,0]},
+    confirmed: {label:'تأیید شد ✅',              cls:'status-confirmed', icon:'✅', steps:[1,1,1,0]},
+    approved:  {label:'تأیید شد ✅',              cls:'status-confirmed', icon:'✅', steps:[1,1,1,0]},
+    paid:      {label:'تأیید شد ✅',              cls:'status-confirmed', icon:'✅', steps:[1,1,1,0]},
+    preparing: {label:'در حال آماده‌سازی',        cls:'status-preparing', icon:'👨‍🍳', steps:[1,1,1,0]},
+    ready:     {label:'آماده تحویل 🎉',           cls:'status-ready',     icon:'🎉', steps:[1,1,1,1]},
+    rejected:  {label:'رد شد ❌',                 cls:'status-rejected',  icon:'❌', steps:[1,0,0,0]},
+    cancelled: {label:'لغو شد',                   cls:'status-rejected',  icon:'❌', steps:[1,0,0,0]},
   };
   const st=statusMap[o.status]||statusMap.pending;
   const items=Array.isArray(o.items)?o.items:[];
