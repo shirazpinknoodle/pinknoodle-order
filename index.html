@@ -602,37 +602,37 @@ async function fetchTakenSlots(){
   const validSlots=new Set(generateAllSlots());
   const taken={};
 
-  // سفارش‌های فعال — همه وضعیت‌ها غیر از draft و rejected اسلات می‌گیرند
-  // شامل: pending, confirmed, preparing, ready, paid, approved و هر وضعیت دیگری
+  // همه سفارش‌ها را بگیر و در کلاینت فیلتر کن
+  // (برخی نسخه‌های PostgREST از not.in. پشتیبانی کامل ندارند)
   const r1=await supaFetch(
-    '/rest/v1/online_orders?select=delivery_time,status&status=not.in.(draft,rejected)',
+    '/rest/v1/online_orders?select=delivery_time,status,reserved_until',
     {headers:{'Accept':'application/json'}}
   );
   if(!r1.ok) throw new Error('server '+r1.status);
-  const rows1=await r1.json();
-  rows1.forEach(r=>{
+  const rows=await r1.json();
+
+  rows.forEach(r=>{
     if(!r.delivery_time) return;
     const t=String(r.delivery_time).substring(0,5);
     if(!validSlots.has(t)) return;
+
+    const st=r.status||'';
+
+    // rejected هرگز اسلات نمی‌گیرد
+    if(st==='rejected') return;
+
+    // draft فقط اگر هنوز منقضی نشده اسلات می‌گیرد
+    if(st==='draft'){
+      if(r.reserved_until && r.reserved_until < now) return;
+      taken[t]=(taken[t]||0)+1;
+      return;
+    }
+
+    // بقیه همه (pending, confirmed, preparing, ready, paid, approved, ...) اسلات می‌گیرند
     taken[t]=(taken[t]||0)+1;
   });
 
-  // draft هایی که هنوز منقضی نشده‌اند اسلات موقت می‌گیرند
-  const r2=await supaFetch(
-    '/rest/v1/online_orders?select=delivery_time,reserved_until&status=eq.draft',
-    {headers:{'Accept':'application/json'}}
-  );
-  if(r2.ok){
-    const rows2=await r2.json();
-    rows2.forEach(r=>{
-      if(!r.delivery_time) return;
-      const t=String(r.delivery_time).substring(0,5);
-      if(!validSlots.has(t)) return;
-      if(r.reserved_until && r.reserved_until < now) return;
-      taken[t]=(taken[t]||0)+1;
-    });
-  }
-
+  console.log('[Slots] taken map:', JSON.stringify(taken));
   return taken;
 }
 
