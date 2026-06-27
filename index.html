@@ -1219,7 +1219,7 @@ function startTrackPolling(phone){
       // همیشه UI را آپدیت کن (نه فقط وقتی تغییر داشت)
       document.getElementById('track-results').innerHTML=orders.map(o=>renderOrderCard(o)).join('');
       // polling را فقط وقتی همه سفارش‌ها به حالت نهایی رسیدند متوقف کن
-      const hasActive=orders.some(o=>!['ready','rejected','cancelled'].includes(o.status));
+      const hasActive=orders.some(o=>!['ready','delivered','done','completed','rejected','cancelled'].includes(o.status));
       if(!hasActive) stopTrackPolling();
     } catch(e){ /* silent */ }
   }, 5000);
@@ -1227,11 +1227,17 @@ function startTrackPolling(phone){
 
 function showStatusChangeNotif(o){
   const statusMap={
-    confirmed:{label:'تأیید شد ✅',color:'var(--green)'},
-    rejected:{label:'رد شد ❌',color:'var(--red)'},
-    preparing:{label:'در حال آماده‌سازی 👨‍🍳',color:'var(--pink-light)'},
-    ready:{label:'آماده تحویل 🎉',color:'var(--green)'},
-    pending:{label:'در انتظار تأیید ⏳',color:'var(--yellow)'}
+    pending:   {label:'در انتظار تأیید ⏳',        color:'var(--yellow)'},
+    confirmed: {label:'تأیید شد ✅',               color:'var(--green)'},
+    approved:  {label:'تأیید شد ✅',               color:'var(--green)'},
+    paid:      {label:'تأیید شد ✅',               color:'var(--green)'},
+    preparing: {label:'در حال آماده‌سازی 👨‍🍳',    color:'var(--pink-light)'},
+    ready:     {label:'آماده تحویل 🎉',            color:'var(--green)'},
+    delivered: {label:'تحویل داده شد 🎉',          color:'var(--green)'},
+    done:      {label:'تحویل داده شد 🎉',          color:'var(--green)'},
+    completed: {label:'تحویل داده شد 🎉',          color:'var(--green)'},
+    rejected:  {label:'رد شد ❌',                  color:'var(--red)'},
+    cancelled: {label:'لغو شد ❌',                 color:'var(--red)'},
   };
   const st=statusMap[o.status]||{label:o.status,color:'var(--text2)'};
   const notif=document.createElement('div');
@@ -1249,10 +1255,13 @@ function renderOrderCard(o){
     confirmed: {label:'تأیید شد ✅',              cls:'status-confirmed', icon:'✅', steps:[1,1,1,0]},
     approved:  {label:'تأیید شد ✅',              cls:'status-confirmed', icon:'✅', steps:[1,1,1,0]},
     paid:      {label:'تأیید شد ✅',              cls:'status-confirmed', icon:'✅', steps:[1,1,1,0]},
-    preparing: {label:'در حال آماده‌سازی',        cls:'status-preparing', icon:'👨‍🍳', steps:[1,1,1,0]},
+    preparing: {label:'در حال آماده‌سازی 👨‍🍳',   cls:'status-preparing', icon:'👨‍🍳', steps:[1,1,1,0]},
     ready:     {label:'آماده تحویل 🎉',           cls:'status-ready',     icon:'🎉', steps:[1,1,1,1]},
+    delivered: {label:'تحویل داده شد 🎉',         cls:'status-ready',     icon:'🎉', steps:[1,1,1,1]},
+    done:      {label:'تحویل داده شد 🎉',         cls:'status-ready',     icon:'🎉', steps:[1,1,1,1]},
+    completed: {label:'تحویل داده شد 🎉',         cls:'status-ready',     icon:'🎉', steps:[1,1,1,1]},
     rejected:  {label:'رد شد ❌',                 cls:'status-rejected',  icon:'❌', steps:[1,0,0,0]},
-    cancelled: {label:'لغو شد',                   cls:'status-rejected',  icon:'❌', steps:[1,0,0,0]},
+    cancelled: {label:'لغو شد ❌',                cls:'status-rejected',  icon:'❌', steps:[1,0,0,0]},
   };
   const st=statusMap[o.status]||statusMap.pending;
   const items=Array.isArray(o.items)?o.items:[];
