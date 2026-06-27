@@ -463,7 +463,7 @@ const SLOT_MINUTES = 3;
 const SLOT_CAPACITY= 1;
 const SLOT_MIN_AHEAD = 30;
 
-const DISCOUNT_CODES = { 'PINK10':10, 'VIP20':20, 'WELCOME15':15 };
+// کدهای تخفیف از Supabase خوانده می‌شوند (جدول discount_codes)
 
 // ══ بررسی موجودی — مستقیم از فیلد stock جدول menu ══
 // stock فیلد عددی در جدول menu است (null = بدون محدودیت، 0 = تمام شده)
@@ -972,17 +972,45 @@ function updateTotal(){
 }
 
 // ══════════ کد تخفیف ══════════
-function applyDiscount(){
+async function applyDiscount(){
   const code=(document.getElementById('discount-code').value||'').trim().toUpperCase();
   const errEl=document.getElementById('discount-err'); errEl.textContent='';
+  const applyBtn=document.querySelector('.discount-apply');
   if(!code){errEl.textContent='کد تخفیف رو وارد کن';return;}
-  const pct=DISCOUNT_CODES[code];
-  if(!pct){errEl.textContent='کد تخفیف معتبر نیست';return;}
-  discountPct=pct; discountCode=code;
-  document.getElementById('discount-input-wrap').style.display='none';
-  document.getElementById('discount-applied-wrap').style.display='block';
-  document.getElementById('discount-applied-txt').textContent=tp(pct)+'٪ تخفیف';
-  updateTotal();
+  if(applyBtn){ applyBtn.disabled=true; applyBtn.textContent='...'; }
+  try{
+    // بررسی کد از Supabase — فعال و استفاده نشده
+    const res = await supaFetch(
+      '/rest/v1/discount_codes?code=eq.'+encodeURIComponent(code)+'&active=eq.true&used=eq.false&select=id,code,percent',
+      {headers:{'Accept':'application/json'}}
+    );
+    if(!res.ok) throw new Error('server error');
+    const rows = await res.json();
+    if(!rows || !rows.length){
+      // چک کن آیا کد وجود دارد ولی قبلاً استفاده شده
+      const res2 = await supaFetch(
+        '/rest/v1/discount_codes?code=eq.'+encodeURIComponent(code)+'&select=used',
+        {headers:{'Accept':'application/json'}}
+      );
+      const rows2 = res2.ok ? await res2.json() : [];
+      if(rows2.length && rows2[0].used){
+        errEl.textContent='این کد قبلاً استفاده شده است';
+      } else {
+        errEl.textContent='کد تخفیف معتبر نیست';
+      }
+      return;
+    }
+    const pct = rows[0].percent;
+    discountPct=pct; discountCode=code;
+    document.getElementById('discount-input-wrap').style.display='none';
+    document.getElementById('discount-applied-wrap').style.display='block';
+    document.getElementById('discount-applied-txt').textContent=tp(pct)+'٪ تخفیف';
+    updateTotal();
+  } catch(e){
+    errEl.textContent='خطا در بررسی کد. دوباره امتحان کن.';
+  } finally{
+    if(applyBtn){ applyBtn.disabled=false; applyBtn.textContent='اعمال'; }
+  }
 }
 function removeDiscount(){
   discountPct=0; discountCode='';
@@ -1141,6 +1169,14 @@ async function finalizeOrder(){
       headers:{'Content-Type':'application/json','Prefer':'return=representation'},
       body:JSON.stringify({status:'pending',receipt_text:receiptText||null,receipt_image_url:imageUrl})
     });
+    // کد تخفیف را used=true کن
+    if(discountCode){
+      supaFetch('/rest/v1/discount_codes?code=eq.'+encodeURIComponent(discountCode),{
+        method:'PATCH',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({used:true})
+      });
+    }
     if(!res.ok) throw new Error('server '+(await res.text().catch(()=>'')));
     const data=await res.json();
     const saved=Array.isArray(data)?data[0]:data;
