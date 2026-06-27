@@ -602,10 +602,15 @@ async function fetchTakenSlots(){
   const validSlots=new Set(generateAllSlots());
   const taken={};
 
-  // همه سفارش‌ها را بگیر و در کلاینت فیلتر کن
-  // (برخی نسخه‌های PostgREST از not.in. پشتیبانی کامل ندارند)
+  // فقط سفارش‌های امروز (از نیمه‌شب تا الان + بقیه روز)
+  // با فیلتر created_at >= امروز ساعت 00:00
+  const todayStart = new Date();
+  todayStart.setHours(0,0,0,0);
+  const todayStartISO = todayStart.toISOString();
+
+  // همه سفارش‌های امروز را بگیر و در کلاینت فیلتر کن
   const r1=await supaFetch(
-    '/rest/v1/online_orders?select=delivery_time,status,reserved_until',
+    '/rest/v1/online_orders?select=delivery_time,status,reserved_until&created_at=gte.'+encodeURIComponent(todayStartISO),
     {headers:{'Accept':'application/json'}}
   );
   if(!r1.ok) throw new Error('server '+r1.status);
@@ -632,7 +637,7 @@ async function fetchTakenSlots(){
     taken[t]=(taken[t]||0)+1;
   });
 
-  console.log('[Slots] taken map:', JSON.stringify(taken));
+  console.log('[Slots] today start:', todayStartISO, '| taken:', JSON.stringify(taken));
   return taken;
 }
 
