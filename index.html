@@ -803,7 +803,7 @@ function getJalaliToday(){
   return `${jy}/${String(jm).padStart(2,'0')}/${String(jd).padStart(2,'0')}`;
 }
 
-// ══ نگاشت مصرف مواد اولیه هر غذا — باید با صندوق یکسان باشد ══
+// ══ نگاشت مصرف مواد اولیه هر غذا ══
 const ITEM_COST = {
   'نودل مرغ':        { noodle:1.5, chicken:1, teriyaki_sauce:1, bowl:1 },
   'نودل گوشت':       { noodle:1.5, beef:1,    teriyaki_sauce:1, bowl:1 },
@@ -819,26 +819,63 @@ const ITEM_COST = {
 };
 const INV_KEYS = ['noodle','chicken','beef','cheese','pasta','cream_sauce','teriyaki_sauce','bowl','water','soda','lemonade'];
 
-// ══ خواندن باقی‌مانده از Supabase و محاسبه حداکثر هر غذا ══
+// ══ خواندن موجودی اولیه + کسر سفارش‌های امروز = باقی‌مانده واقعی ══
 async function loadInventoryLimits(){
   itemMaxMap = {};
   try{
-    const res = await supaFetch('/rest/v1/settings?key=eq.inventory_remaining&select=value');
-    if(!res.ok){ console.warn('[Inv] settings error:', res.status); return; }
-    const rows = await res.json();
-    if(!rows || !rows.length){ console.warn('[Inv] inventory_remaining not found'); return; }
+    // ۱. موجودی اولیه از daily_inventory
+    const r1 = await supaFetch('/rest/v1/settings?key=eq.daily_inventory&select=value');
+    if(!r1.ok) return;
+    const rows = await r1.json();
+    if(!rows || !rows.length) return;
+    const inv = JSON.parse(rows[0].value || '{}');
 
-    const remaining = JSON.parse(rows[0].value || '{}');
-    console.log('[Inv] remaining:', JSON.stringify(remaining));
-
-    // تاریخ شمسی امروز
+    // بررسی تاریخ شمسی
     const todayJalali = getJalaliToday();
-    if(remaining._date && remaining._date !== todayJalali){
-      console.warn('[Inv] باقی‌مانده مربوط به تاریخ دیگری است:', remaining._date);
+    if(inv._date && inv._date !== todayJalali){
+      console.warn('[Inv] موجودی مال امروز نیست:', inv._date, '!=', todayJalali);
       return;
     }
 
-    // محاسبه حداکثر سفارش هر آیتم از روی باقی‌مانده مواد اولیه
+    // ۲. سفارش‌های تایید‌شده امروز از online_orders
+    const todayStart = new Date();
+    todayStart.setHours(0,0,0,0);
+    const todayISO = todayStart.toISOString();
+    const r2 = await supaFetch(
+      '/rest/v1/online_orders?select=items,status&created_at=gte.'+encodeURIComponent(todayISO)+
+      '&status=not.in.(draft,rejected)',
+      {headers:{'Accept':'application/json'}}
+    );
+
+    // ۳. محاسبه مصرف واقعی از سفارش‌های تایید‌شده
+    const consumed = {};
+    INV_KEYS.forEach(k => consumed[k] = 0);
+
+    if(r2.ok){
+      const orders = await r2.json();
+      orders.forEach(order => {
+        const items = Array.isArray(order.items) ? order.items : [];
+        items.forEach(it => {
+          const cost = ITEM_COST[it.name];
+          if(!cost) return;
+          INV_KEYS.forEach(k => {
+            if(cost[k]) consumed[k] += cost[k] * (it.qty || 1);
+          });
+        });
+      });
+    }
+    console.log('[Inv] consumed:', JSON.stringify(consumed));
+
+    // ۴. باقی‌مانده = موجودی اولیه − مصرف
+    const remaining = {};
+    INV_KEYS.forEach(k => {
+      const initial = (inv[k] !== undefined && inv[k] !== '') ? Number(inv[k]) : null;
+      if(initial === null){ remaining[k] = null; return; } // بدون محدودیت
+      remaining[k] = Math.max(0, initial - consumed[k]);
+    });
+    console.log('[Inv] remaining:', JSON.stringify(remaining));
+
+    // ۵. محاسبه حداکثر سفارش هر آیتم از روی باقی‌مانده
     menu.forEach(m => {
       const cost = ITEM_COST[m.name];
       if(!cost){ itemMaxMap[m.id] = 99; return; }
@@ -846,9 +883,8 @@ async function loadInventoryLimits(){
       let maxQty = 999;
       INV_KEYS.forEach(k => {
         if(!cost[k]) return;
-        const avail = remaining[k];
-        if(avail === null || avail === undefined) return;
-        const possible = Math.floor(avail / cost[k]);
+        if(remaining[k] === null) return; // بدون محدودیت
+        const possible = Math.floor(remaining[k] / cost[k]);
         if(possible < maxQty) maxQty = possible;
       });
 
