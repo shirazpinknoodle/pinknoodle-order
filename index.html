@@ -598,46 +598,44 @@ function generateAllSlots(){
 
 // ══════════ گرفتن اسلات‌های پر از Supabase ══════════
 async function fetchTakenSlots(){
-  const now=new Date().toISOString();
-  const validSlots=new Set(generateAllSlots());
-  const taken={};
+  const now = new Date().toISOString();
+  const validSlots = new Set(generateAllSlots());
+  const taken = {};
 
-  // فقط سفارش‌های امروز (از نیمه‌شب تا الان + بقیه روز)
-  // با فیلتر created_at >= امروز ساعت 00:00
+  // فقط سفارش‌های امروز (از نیمه‌شب)
   const todayStart = new Date();
   todayStart.setHours(0,0,0,0);
-  const todayStartISO = todayStart.toISOString();
+  const todayISO = todayStart.toISOString();
 
-  // همه سفارش‌های امروز را بگیر و در کلاینت فیلتر کن
-  const r1=await supaFetch(
-    '/rest/v1/online_orders?select=delivery_time,status,reserved_until&created_at=gte.'+encodeURIComponent(todayStartISO),
+  const res = await supaFetch(
+    '/rest/v1/online_orders?select=delivery_time,status,reserved_until&created_at=gte.'+encodeURIComponent(todayISO),
     {headers:{'Accept':'application/json'}}
   );
-  if(!r1.ok) throw new Error('server '+r1.status);
-  const rows=await r1.json();
+  if(!res.ok) throw new Error('server '+res.status);
+  const rows = await res.json();
 
   rows.forEach(r=>{
     if(!r.delivery_time) return;
-    const t=String(r.delivery_time).substring(0,5);
+    const t = String(r.delivery_time).substring(0,5);
     if(!validSlots.has(t)) return;
 
-    const st=r.status||'';
+    const st = r.status || '';
 
     // rejected هرگز اسلات نمی‌گیرد
-    if(st==='rejected') return;
+    if(st === 'rejected') return;
 
-    // draft فقط اگر هنوز منقضی نشده اسلات می‌گیرد
-    if(st==='draft'){
+    // draft فقط اگر هنوز منقضی نشده
+    if(st === 'draft'){
       if(r.reserved_until && r.reserved_until < now) return;
-      taken[t]=(taken[t]||0)+1;
+      taken[t] = (taken[t]||0) + 1;
       return;
     }
 
-    // بقیه همه (pending, confirmed, preparing, ready, paid, approved, ...) اسلات می‌گیرند
-    taken[t]=(taken[t]||0)+1;
+    // بقیه همه (pending, confirmed, paid, approved, ...) اسلات می‌گیرند
+    taken[t] = (taken[t]||0) + 1;
   });
 
-  console.log('[Slots] today start:', todayStartISO, '| taken:', JSON.stringify(taken));
+  console.log('[Slots] taken:', JSON.stringify(taken));
   return taken;
 }
 
@@ -770,8 +768,16 @@ async function loadMenu(){
     showScreen('empty-state');
     return;
   }
-  // بارگذاری موجودی و محاسبه سقف هر آیتم
-  await loadInventoryLimits();
+  // موجودی را مستقیم از فیلد stock همان داده menu بخوان
+  itemMaxMap = {};
+  menu.forEach(m=>{
+    if(m.stock === null || m.stock === undefined){
+      itemMaxMap[m.id] = 99; // بدون محدودیت
+    } else {
+      itemMaxMap[m.id] = Math.max(0, Number(m.stock)||0);
+    }
+  });
+  console.log('[Stock] itemMaxMap:', JSON.stringify(itemMaxMap));
   renderMenu();
   showScreen('landing-screen');
 }
