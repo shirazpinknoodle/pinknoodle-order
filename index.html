@@ -841,9 +841,11 @@ async function loadInventoryLimits(){
     const todayStart = new Date();
     todayStart.setHours(0,0,0,0);
     const todayISO = todayStart.toISOString();
+    // فقط سفارش‌های تایید‌شده توسط صندوق (approved/ready/delivered)
+    // دقیقاً مثل صندوق که از db.orders می‌خواند
     const r2 = await supaFetch(
       '/rest/v1/online_orders?select=items,status&created_at=gte.'+encodeURIComponent(todayISO)+
-      '&status=not.in.(draft,rejected)',
+      '&status=in.(approved,ready,delivered,done,completed)',
       {headers:{'Accept':'application/json'}}
     );
 
