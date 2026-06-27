@@ -569,14 +569,32 @@ function showScreen(id){
   if(!el) return;
   el.style.display=(id==='landing-screen'||id==='success-screen')?'flex':'block';
 }
-function showLanding(){ stopTrackPolling(); showScreen('landing-screen'); }
+function showLanding(){ stopTrackPolling(); stopInventoryPolling(); showScreen('landing-screen'); }
 function showTrack(){
   showScreen('track-screen');
   if(lastPhone) document.getElementById('track-phone').value=lastPhone;
 }
+let _invPollTimer = null;
+
+function startInventoryPolling(){
+  stopInventoryPolling();
+  // بلافاصله یک بار بخوان
+  loadInventoryLimits().then(()=>renderMenu());
+  // بعد هر ۱۵ ثانیه
+  _invPollTimer = setInterval(async()=>{
+    await loadInventoryLimits();
+    renderMenu();
+  }, 15000);
+}
+
+function stopInventoryPolling(){
+  if(_invPollTimer){ clearInterval(_invPollTimer); _invPollTimer=null; }
+}
+
 function goToOrder(){
   showScreen('order-screen');
   loadSlots(false);
+  startInventoryPolling();
 }
 function goToTrackAfterSuccess(){
   document.getElementById('track-phone').value=lastPhone;
@@ -764,6 +782,27 @@ async function loadMenu(){
 }
 
 // ══════════ بارگذاری سقف موجودی هر آیتم از فیلد stock جدول menu ══════════
+// ══ تبدیل تاریخ میلادی به شمسی (دقیقاً مثل صندوق) ══
+function getJalaliToday(){
+  const now = new Date();
+  const iranOffset = 3.5 * 60;
+  const utcMs = now.getTime() + now.getTimezoneOffset() * 60000;
+  const iranDate = new Date(utcMs + iranOffset * 60000);
+  let gy=iranDate.getFullYear(), gm=iranDate.getMonth()+1, gd=iranDate.getDate();
+  let gdays=[31,28,31,30,31,30,31,31,30,31,30,31];
+  if(((gy%4===0)&&(gy%100!==0))||(gy%400===0)) gdays[1]=29;
+  let G=gy-1600, Gm=gm-1, Gd=gd-1;
+  let gdn=365*G+Math.floor((G+3)/4)-Math.floor((G+99)/100)+Math.floor((G+399)/400);
+  for(let i=0;i<Gm;i++) gdn+=gdays[i];
+  gdn+=Gd;
+  let jdn=gdn-79, jnp=Math.floor(jdn/12053); jdn%=12053;
+  let jy=979+33*jnp+4*Math.floor(jdn/1461); jdn%=1461;
+  if(jdn>=366){jy+=Math.floor((jdn-1)/365);jdn=(jdn-1)%365;}
+  let jm=(jdn<186)?1+Math.floor(jdn/31):7+Math.floor((jdn-186)/30);
+  let jd=1+((jdn<186)?(jdn%31):((jdn-186)%30));
+  return `${jy}/${String(jm).padStart(2,'0')}/${String(jd).padStart(2,'0')}`;
+}
+
 // ══ نگاشت مصرف مواد اولیه هر غذا — باید با صندوق یکسان باشد ══
 const ITEM_COST = {
   'نودل مرغ':        { noodle:1.5, chicken:1, teriyaki_sauce:1, bowl:1 },
@@ -780,26 +819,28 @@ const ITEM_COST = {
 };
 const INV_KEYS = ['noodle','chicken','beef','cheese','pasta','cream_sauce','teriyaki_sauce','bowl','water','soda','lemonade'];
 
-// ══ خواندن موجودی از Supabase (daily_inventory) و محاسبه حداکثر هر غذا ══
+// ══ خواندن موجودی از Supabase و محاسبه حداکثر هر غذا ══
 async function loadInventoryLimits(){
   itemMaxMap = {};
   try{
     const res = await supaFetch('/rest/v1/settings?key=eq.daily_inventory&select=value');
-    if(!res.ok) return;
+    if(!res.ok){ console.warn('[Inv] settings error:', res.status); return; }
     const rows = await res.json();
-    if(!rows || !rows.length) return;
+    if(!rows || !rows.length){ console.warn('[Inv] daily_inventory not found'); return; }
 
     const inv = JSON.parse(rows[0].value || '{}');
+    console.log('[Inv] raw inventory:', JSON.stringify(inv));
 
-    // بررسی تاریخ — اگر موجودی مال امروز نیست، نادیده بگیر
-    const today = new Date();
-    const todayStr = today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
-    if(inv._date && inv._date !== todayStr){
-      console.log('[Inventory] موجودی مربوط به تاریخ دیگری است، نادیده گرفته شد');
+    // تاریخ شمسی امروز — دقیقاً مثل صندوق
+    const todayJalali = getJalaliToday();
+    console.log('[Inv] today jalali:', todayJalali, '| inv._date:', inv._date);
+
+    if(inv._date && inv._date !== todayJalali){
+      console.warn('[Inv] موجودی مربوط به تاریخ دیگری است:', inv._date);
       return;
     }
 
-    // برای هر آیتم منو، حداکثر تعداد قابل تهیه را محاسبه کن
+    // محاسبه حداکثر سفارش هر آیتم از روی موجودی مواد اولیه
     menu.forEach(m => {
       const cost = ITEM_COST[m.name];
       if(!cost){ itemMaxMap[m.id] = 99; return; }
@@ -808,7 +849,7 @@ async function loadInventoryLimits(){
       INV_KEYS.forEach(k => {
         if(!cost[k]) return;
         const available = (inv[k] !== undefined && inv[k] !== '') ? Number(inv[k]) : null;
-        if(available === null) return; // این ماده بدون محدودیت
+        if(available === null) return;
         const possible = Math.floor(available / cost[k]);
         if(possible < maxQty) maxQty = possible;
       });
@@ -816,8 +857,8 @@ async function loadInventoryLimits(){
       itemMaxMap[m.id] = Math.max(0, maxQty === 999 ? 99 : maxQty);
     });
 
-    console.log('[Inventory] itemMaxMap:', JSON.stringify(itemMaxMap));
-  } catch(e){ console.warn('[Inventory] خطا:', e); }
+    console.log('[Inv] itemMaxMap:', JSON.stringify(itemMaxMap));
+  } catch(e){ console.error('[Inv] خطا:', e); }
 }
 
 // ══════════ رندر منو ══════════
