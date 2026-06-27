@@ -819,28 +819,26 @@ const ITEM_COST = {
 };
 const INV_KEYS = ['noodle','chicken','beef','cheese','pasta','cream_sauce','teriyaki_sauce','bowl','water','soda','lemonade'];
 
-// ══ خواندن موجودی از Supabase و محاسبه حداکثر هر غذا ══
+// ══ خواندن باقی‌مانده از Supabase و محاسبه حداکثر هر غذا ══
 async function loadInventoryLimits(){
   itemMaxMap = {};
   try{
-    const res = await supaFetch('/rest/v1/settings?key=eq.daily_inventory&select=value');
+    const res = await supaFetch('/rest/v1/settings?key=eq.inventory_remaining&select=value');
     if(!res.ok){ console.warn('[Inv] settings error:', res.status); return; }
     const rows = await res.json();
-    if(!rows || !rows.length){ console.warn('[Inv] daily_inventory not found'); return; }
+    if(!rows || !rows.length){ console.warn('[Inv] inventory_remaining not found'); return; }
 
-    const inv = JSON.parse(rows[0].value || '{}');
-    console.log('[Inv] raw inventory:', JSON.stringify(inv));
+    const remaining = JSON.parse(rows[0].value || '{}');
+    console.log('[Inv] remaining:', JSON.stringify(remaining));
 
-    // تاریخ شمسی امروز — دقیقاً مثل صندوق
+    // تاریخ شمسی امروز
     const todayJalali = getJalaliToday();
-    console.log('[Inv] today jalali:', todayJalali, '| inv._date:', inv._date);
-
-    if(inv._date && inv._date !== todayJalali){
-      console.warn('[Inv] موجودی مربوط به تاریخ دیگری است:', inv._date);
+    if(remaining._date && remaining._date !== todayJalali){
+      console.warn('[Inv] باقی‌مانده مربوط به تاریخ دیگری است:', remaining._date);
       return;
     }
 
-    // محاسبه حداکثر سفارش هر آیتم از روی موجودی مواد اولیه
+    // محاسبه حداکثر سفارش هر آیتم از روی باقی‌مانده مواد اولیه
     menu.forEach(m => {
       const cost = ITEM_COST[m.name];
       if(!cost){ itemMaxMap[m.id] = 99; return; }
@@ -848,9 +846,9 @@ async function loadInventoryLimits(){
       let maxQty = 999;
       INV_KEYS.forEach(k => {
         if(!cost[k]) return;
-        const available = (inv[k] !== undefined && inv[k] !== '') ? Number(inv[k]) : null;
-        if(available === null) return;
-        const possible = Math.floor(available / cost[k]);
+        const avail = remaining[k];
+        if(avail === null || avail === undefined) return;
+        const possible = Math.floor(avail / cost[k]);
         if(possible < maxQty) maxQty = possible;
       });
 
