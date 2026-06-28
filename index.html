@@ -467,38 +467,77 @@ const SLOT_MIN_AHEAD = 30;
 
 // کدهای تخفیف از Supabase خوانده می‌شوند (جدول discount_codes)
 
-// ══ بررسی موجودی — مستقیم از فیلد stock جدول menu ══
-// stock فیلد عددی در جدول menu است (null = بدون محدودیت، 0 = تمام شده)
-// این تابع موجودی تازه از Supabase می‌گیره و با سفارش مقایسه می‌کنه
+// ══ بررسی موجودی — دقیقاً همان منطق loadInventoryLimits (daily_inventory + مصرف امروز) ══
+// این تابع موجودی واقعی را دوباره از Supabase می‌گیرد و با آیتم‌های سفارش مقایسه می‌کند
 async function checkOnlineInventory(items){
-  // دریافت تازه‌ترین موجودی از menu
-  let freshMenuStock = {}; // { itemId: stock }
-  const res = await supaFetch('/rest/v1/menu?select=id,name,stock');
-  if(res.ok){
-    const rows = await res.json();
-    rows.forEach(r=>{ freshMenuStock[r.id] = r.stock; });
-  } else {
-    // اگر API موجودی نداد، جلوی سفارش رو بگیر
+  try{
+    // ۱. موجودی اولیه از daily_inventory (همان منبع صندوق)
+    const r1 = await supaFetch('/rest/v1/settings?key=eq.daily_inventory&select=value');
+    if(!r1.ok) return ['خطا در بررسی موجودی. لطفاً دوباره تلاش کنید.'];
+    const rows = await r1.json();
+    if(!rows || !rows.length) return null; // اگر موجودی تنظیم نشده، بدون محدودیت
+    const inv = JSON.parse(rows[0].value || '{}');
+
+    // بررسی تاریخ شمسی — اگر موجودی مال امروز نیست بدون محدودیت بگذار
+    const todayJalali = getJalaliToday();
+    if(inv._date && inv._date !== todayJalali) return null;
+
+    // ۲. سفارش‌های تایید‌شده امروز
+    const todayStart = new Date(); todayStart.setHours(0,0,0,0);
+    const r2 = await supaFetch(
+      '/rest/v1/online_orders?select=items,status&created_at=gte.'+encodeURIComponent(todayStart.toISOString())+
+      '&status=not.in.(draft,rejected)',
+      {headers:{'Accept':'application/json'}}
+    );
+
+    // ۳. محاسبه مصرف واقعی
+    const consumed = {};
+    INV_KEYS.forEach(k => consumed[k] = 0);
+    if(r2.ok){
+      const orders = await r2.json();
+      orders.forEach(order => {
+        (Array.isArray(order.items)?order.items:[]).forEach(it => {
+          const cost = ITEM_COST[it.name];
+          if(!cost) return;
+          INV_KEYS.forEach(k => { if(cost[k]) consumed[k] += cost[k] * (it.qty||1); });
+        });
+      });
+    }
+
+    // ۴. باقی‌مانده = موجودی اولیه − مصرف
+    const remaining = {};
+    INV_KEYS.forEach(k => {
+      const initial = (inv[k] !== undefined && inv[k] !== '') ? Number(inv[k]) : null;
+      remaining[k] = initial === null ? null : Math.max(0, initial - consumed[k]);
+    });
+
+    // ۵. بررسی هر آیتم سفارش با همان منطق itemMaxMap
+    const errors = [];
+    items.forEach(it => {
+      const cost = ITEM_COST[it.name];
+      if(!cost) return; // آیتم بدون نگاشت = بدون محدودیت
+
+      let maxQty = 999;
+      INV_KEYS.forEach(k => {
+        if(!cost[k]) return;
+        if(remaining[k] === null) return;
+        const possible = Math.floor(remaining[k] / cost[k]);
+        if(possible < maxQty) maxQty = possible;
+      });
+      maxQty = Math.max(0, maxQty === 999 ? 99 : maxQty);
+
+      if(it.qty > maxQty){
+        if(maxQty <= 0){
+          errors.push(`«${it.name}» تمام شده است`);
+        } else {
+          errors.push(`«${it.name}»: فقط ${tp(maxQty)} عدد موجود است`);
+        }
+      }
+    });
+    return errors.length ? errors : null;
+  } catch(e){
     return ['خطا در بررسی موجودی. لطفاً دوباره تلاش کنید.'];
   }
-
-  // بررسی هر آیتم
-  const errors = [];
-  items.forEach(it=>{
-    const stock = freshMenuStock[it.itemId];
-    // اگر stock null یا undefined باشه = بدون محدودیت
-    if(stock === null || stock === undefined) return;
-    const stockNum = Number(stock);
-    if(isNaN(stockNum)) return;
-    if(it.qty > stockNum){
-      if(stockNum <= 0){
-        errors.push(`«${it.name}» تمام شده است`);
-      } else {
-        errors.push(`«${it.name}»: فقط ${tp(stockNum)} عدد موجود است`);
-      }
-    }
-  });
-  return errors.length ? errors : null;
 }
 
 const SAUCES = ['سس تری‌یاکی','سس خامه‌ای صورتی','سس گوجوچانگ تند','سس بادام زمینی'];
