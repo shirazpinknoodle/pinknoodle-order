@@ -863,10 +863,10 @@ async function loadInventoryLimits(){
       return;
     }
 
-    // ۲. مصرف سفارشات صندوق امروز
+    // ۲. مصرف سفارشات صندوق امروز (دقیقاً مثل صندوق — جدول orders فیلد date)
     const consumed = {};
     INV_KEYS.forEach(k => consumed[k] = 0);
-    const r2 = await supaFetch('/rest/v1/orders?select=items,date&date=eq.'+encodeURIComponent(today));
+    const r2 = await supaFetch('/rest/v1/orders?select=items&date=eq.'+encodeURIComponent(today));
     if(r2.ok){
       const cashierOrders = await r2.json();
       cashierOrders.forEach(order => {
@@ -874,33 +874,6 @@ async function loadInventoryLimits(){
           const menuItem = menu.find(m => m.id === it.itemId);
           if(!menuItem) return;
           const cost = ITEM_COST[menuItem.name];
-          if(!cost) return;
-          INV_KEYS.forEach(k => { if(cost[k]) consumed[k] += cost[k] * (it.qty||1); });
-        });
-      });
-    }
-
-    // ۳. مصرف سفارشات آنلاین تایید‌شده امروز
-    const todayStart = new Date();
-    const iranOffset = 3.5 * 60;
-    const utcMs = todayStart.getTime() + todayStart.getTimezoneOffset() * 60000;
-    const iranNow = new Date(utcMs + iranOffset * 60000);
-    // اگر قبل از ۸ صبحه، از دیروز ساعت ۸ شروع کن
-    if(iranNow.getHours() < 8){
-      iranNow.setDate(iranNow.getDate() - 1);
-    }
-    iranNow.setHours(8,0,0,0);
-    const cutoffISO = new Date(iranNow.getTime() - iranOffset * 60000).toISOString();
-    const r3 = await supaFetch(
-      '/rest/v1/online_orders?select=items,status&created_at=gte.'+encodeURIComponent(cutoffISO)+
-      '&status=not.in.(draft,rejected)',
-      {headers:{'Accept':'application/json'}}
-    );
-    if(r3.ok){
-      const onlineOrders = await r3.json();
-      onlineOrders.forEach(order => {
-        (order.items||[]).forEach(it => {
-          const cost = ITEM_COST[it.name];
           if(!cost) return;
           INV_KEYS.forEach(k => { if(cost[k]) consumed[k] += cost[k] * (it.qty||1); });
         });
