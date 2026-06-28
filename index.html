@@ -168,10 +168,8 @@ body{font-family:Tahoma,sans-serif;background:var(--bg);color:var(--text);min-he
 
 <!-- لودر -->
 <div id="loader" style="display:flex;flex-direction:column;align-items:center;padding-top:90px;">
-  <div style="font-size:28px;font-weight:700;color:#EC4899;margin-bottom:10px;">Pink Noodle</div>
-  <div style="font-size:18px;font-weight:700;color:#FDF2F8;margin-bottom:20px;">خوش اومدید 🍜</div>
   <div class="spinner"></div>
-  <div style="font-size:14px;color:#A07C8D;margin-top:12px;">لطفاً کمی صبر کنید...</div>
+  <div style="font-size:22px;font-weight:700;color:#EC4899;margin-top:8px;">به Pink Noodle خوش اومدی 🌸</div>
 </div>
 
 <!-- هدر -->
@@ -179,7 +177,7 @@ body{font-family:Tahoma,sans-serif;background:var(--bg);color:var(--text);min-he
   <div class="brand">Pink<span> Noodle</span></div>
   <div class="brand-sub">سفارش آنلاین</div>
   <div class="header-links">
-    <a href="tel:09179121698">📞 ۰۹۱۷۹۱۲۱۶۹۸</a>
+    <a href="tel:09015155863">📞 ۰۹۰۱۵۱۵۵۸۶۳</a>
     <a href="https://instagram.com/shiraz.pink.noodle" target="_blank">📸 shiraz.pink.noodle</a>
   </div>
 </div>
@@ -336,7 +334,7 @@ body{font-family:Tahoma,sans-serif;background:var(--bg);color:var(--text);min-he
   </div>
 
   <div class="footer-links">
-    <a href="tel:09179121698">📞 ۰۹۱۷۹۱۲۱۶۹۸</a>
+    <a href="tel:09015155863">📞 ۰۹۰۱۵۱۵۵۸۶۳</a>
     <a href="https://instagram.com/shiraz.pink.noodle" target="_blank">📸 shiraz.pink.noodle</a>
   </div>
 </div>
@@ -378,9 +376,11 @@ body{font-family:Tahoma,sans-serif;background:var(--bg);color:var(--text);min-he
         <label class="form-label">عکس فیش (اختیاری)</label>
         <div class="file-drop" id="file-drop">
           <input type="file" id="receipt-file" accept="image/*" onchange="onFileSelected(event)">
-          <div class="file-drop-text" id="file-drop-text">برای انتخاب عکس فیش ضربه بزنید</div>
+          <div class="file-drop-text" id="file-drop-text">برای انتخاب عکس ضربه بزنید</div>
         </div>
-        <img id="receipt-preview" class="preview-img" style="display:none;">
+        <img id="receipt-preview" class="preview-img" style="display:none;margin-top:8px;">
+        <button class="btn-secondary" id="upload-btn" onclick="doUploadReceipt()" style="display:none;margin-top:10px;">⬆️ آپلود عکس فیش</button>
+        <div id="upload-status" style="margin-top:8px;font-size:12px;min-height:18px;"></div>
       </div>
       <div class="hint">حداقل یکی از متن یا عکس فیش رو وارد کن.</div>
     </div>
@@ -395,7 +395,7 @@ body{font-family:Tahoma,sans-serif;background:var(--bg);color:var(--text);min-he
   </div>
 
   <div class="footer-links">
-    <a href="tel:09179121698">📞 ۰۹۱۷۹۱۲۱۶۹۸</a>
+    <a href="tel:09015155863">📞 ۰۹۰۱۵۱۵۵۸۶۳</a>
     <a href="https://instagram.com/shiraz.pink.noodle" target="_blank">📸 shiraz.pink.noodle</a>
   </div>
 </div>
@@ -446,8 +446,8 @@ body{font-family:Tahoma,sans-serif;background:var(--bg);color:var(--text);min-he
 
 <!-- خطا -->
 <div id="empty-state" class="empty-state" style="display:none;">
-  <div style="font-size:34px;margin-bottom:10px;">😕</div>
-  <div id="empty-state-msg">منو در حال حاضر در دسترس نیست.</div>
+  <div style="font-size:34px;margin-bottom:10px;">🌸</div>
+  <div id="empty-state-msg" style="color:#EC4899;font-weight:600;">به Pink Noodle خوش اومدی</div>
 </div>
 
 <script>
@@ -465,7 +465,7 @@ const SLOT_MINUTES = 3;
 const SLOT_CAPACITY= 1;
 const SLOT_MIN_AHEAD = 30;
 
-const DISCOUNT_CODES = { 'PINK10':10, 'VIP20':20, 'WELCOME15':15 };
+// کدهای تخفیف از Supabase خوانده می‌شوند (جدول discount_codes)
 
 // ══ بررسی موجودی — مستقیم از فیلد stock جدول menu ══
 // stock فیلد عددی در جدول menu است (null = بدون محدودیت، 0 = تمام شده)
@@ -571,7 +571,7 @@ function showScreen(id){
   if(!el) return;
   el.style.display=(id==='landing-screen'||id==='success-screen')?'flex':'block';
 }
-function showLanding(){ stopTrackPolling(); stopInventoryPolling(); showScreen('landing-screen'); }
+function showLanding(){ stopTrackPolling(); stopInventoryPolling(); slotLockedForPayment=false; showScreen('landing-screen'); }
 function showTrack(){
   showScreen('track-screen');
   if(lastPhone) document.getElementById('track-phone').value=lastPhone;
@@ -662,9 +662,7 @@ async function loadSlots(showRefreshAnim){
   if(!_slotAutoRefreshTimer){
     _slotAutoRefreshTimer = setInterval(async()=>{
       try{ takenSlots=await fetchTakenSlots(); renderSlots(); } catch(e){}
-    }, 60000); // هر ۱ دقیقه از سرور بخون
-    // هر ۶۰ ثانیه هم بدون fetch فقط رندر کن تا اسلات‌های گذشته خاکستری بشن
-    setInterval(()=>{ renderSlots(); }, 60000);
+    }, 30000);
   }
   try{
     takenSlots=await fetchTakenSlots();
@@ -680,6 +678,9 @@ async function loadSlots(showRefreshAnim){
 }
 
 // ══════════ رندر اسلات‌ها ══════════
+// اگر true باشه یعنی مشتری به صفحه پرداخت رفته — اسلات انتخابی قفل می‌مونه
+let slotLockedForPayment = false;
+
 function renderSlots(){
   const container=document.getElementById('slots-container');
   const allSlots=generateAllSlots();
@@ -693,21 +694,17 @@ function renderSlots(){
     const takenCount=takenSlots[slotTime]||0;
     const isTaken=takenCount>=SLOT_CAPACITY;
     const isSelected=selectedTime===slotTime;
+    // اگر اسلات قفل شده (مشتری در صفحه پرداخته)، اسلات انتخابی‌اش فعال بمونه
+    const isLockedSelected = slotLockedForPayment && isSelected;
     let cls='slot-btn', statusTxt='', disabled='';
-    if(isSelected){
-      // اگه انتخاب شده — حتی اگه گذشته باشه، فعال بمونه
-      cls+=' slot-selected'; statusTxt='انتخاب شما ✓';
-    } else if(isPast){
-      cls+=' slot-past'; statusTxt='گذشته'; disabled='disabled';
-    } else if(isTaken){
-      cls+=' slot-taken'; statusTxt='🔴 پر شده'; disabled='disabled';
-    } else {
-      cls+=' slot-free'; statusTxt='خالی';
-    }
+    if(isSelected){ cls+=' slot-selected'; statusTxt='انتخاب شما ✓'; }
+    else if(isPast){ cls+=' slot-past'; statusTxt='گذشته'; disabled='disabled'; }
+    else if(isTaken){ cls+=' slot-taken'; statusTxt='🔴 پر شده'; disabled='disabled'; }
+    else{ cls+=' slot-free'; statusTxt='خالی'; }
     const displayTime=tp(String(sh).padStart(2,'0'))+':'+tp(String(sm).padStart(2,'0'));
     const slotCode=generateSlotCode(slotTime);
     const slotCodeDisplay=tp(slotCode);
-    html+=`<button type="button" class="${cls}" ${disabled} onclick="selectSlot('${slotTime}')" ${!isPast&&!isTaken?'style="cursor:pointer;"':''}>
+    html+=`<button type="button" class="${cls}" ${disabled} onclick="selectSlot('${slotTime}')" ${isPast||isTaken?'':'style="cursor:pointer;"'}>
       <div class="slot-time">${displayTime}</div>
       <div class="slot-status">${statusTxt}</div>
       ${!isPast&&!isTaken?`<div style="font-size:8px;color:rgba(255,255,255,.35);margin-top:1px;letter-spacing:.5px;">${slotCodeDisplay}</div>`:''}
@@ -715,18 +712,24 @@ function renderSlots(){
   });
   html+='</div>';
   container.innerHTML=html;
-  // اگه اسلات انتخابی پر شده یا گذشته (ولی انتخاب نشده)، پیام بده
-  if(selectedTime){
+  // بررسی اینکه اسلات انتخابی هنوز معتبره (فقط وقتی قفل نشده)
+  if(selectedTime && !slotLockedForPayment){
     const [sh,sm]=selectedTime.split(':').map(Number);
     const slotMin=sh*60+sm;
-    if((takenSlots[selectedTime]||0)>=SLOT_CAPACITY){
+    if(slotMin<nowMin+SLOT_MIN_AHEAD){
       selectedTime=null;
-      document.getElementById('time-err').textContent='⚠️ اسلات انتخابی شما پر شد. لطفاً دوباره انتخاب کن.';
+      document.getElementById('time-err').textContent='⚠️ اسلات انتخابی شما گذشت. لطفاً دوباره انتخاب کن.';
+    } else if((takenSlots[selectedTime]||0)>=SLOT_CAPACITY){
+      // اسلات پر شد توسط مشتری دیگه — هشدار بده ولی اجازه بده خودش عوض کنه
+      document.getElementById('time-err').textContent='⚠️ اسلات انتخابی شما توسط نفر دیگری رزرو شد. لطفاً زمان دیگری انتخاب کن.';
+      selectedTime=null;
     }
   }
 }
 
 async function selectSlot(slotTime){
+  // اگر اسلات قفل شده (در صفحه پرداخت) اجازه تغییر نده
+  if(slotLockedForPayment) return;
   // بررسی زمان گذشته
   const [sh,sm]=slotTime.split(':').map(Number);
   const now=new Date();
@@ -736,7 +739,7 @@ async function selectSlot(slotTime){
     document.getElementById('time-err').textContent='⛔ این اسلات گذشته و قابل انتخاب نیست.';
     return;
   }
-  // بارگذاری تازه از دیتابیس قبل از انتخاب
+  // بارگذاری تازه از دیتابیس قبل از انتخاب (بررسی تداخل همزمان)
   const refreshBtn=document.getElementById('slot-refresh-btn');
   if(refreshBtn){refreshBtn.disabled=true;}
   try{
@@ -745,9 +748,9 @@ async function selectSlot(slotTime){
   finally{
     if(refreshBtn){refreshBtn.disabled=false;}
   }
-  // بررسی ظرفیت اسلات انتخاب‌شده
+  // بررسی ظرفیت — اگر همزمان دو نفر انتخاب کردن، نفر دوم پیام میگیره
   if((takenSlots[slotTime]||0)>=SLOT_CAPACITY){
-    document.getElementById('time-err').textContent='⛔ این اسلات الان پر شد! لطفاً اسلات دیگری انتخاب کن.';
+    document.getElementById('time-err').textContent='⛔ این اسلات همین الان توسط مشتری دیگری رزرو شد! لطفاً زمان دیگری انتخاب کن.';
     selectedTime=null;
     renderSlots();
     return;
@@ -759,7 +762,7 @@ async function selectSlot(slotTime){
 
 // ══════════ بارگذاری اصلی ══════════
 async function loadMenu(){
-  showScreen('loader');
+  showScreen('empty-state');
   document.getElementById('pay-bank').textContent=PAYMENT_INFO.bank;
   document.getElementById('pay-card').textContent=PAYMENT_INFO.card;
   document.getElementById('pay-owner').textContent=PAYMENT_INFO.owner;
@@ -814,7 +817,7 @@ function getJalaliToday(){
   return `${jy}/${String(jm).padStart(2,'0')}/${String(jd).padStart(2,'0')}`;
 }
 
-// ══ نگاشت مصرف مواد اولیه هر غذا — باید با صندوق یکسان باشد ══
+// ══ نگاشت مصرف مواد اولیه هر غذا ══
 const ITEM_COST = {
   'نودل مرغ':        { noodle:1.5, chicken:1, teriyaki_sauce:1, bowl:1 },
   'نودل گوشت':       { noodle:1.5, beef:1,    teriyaki_sauce:1, bowl:1 },
@@ -830,26 +833,63 @@ const ITEM_COST = {
 };
 const INV_KEYS = ['noodle','chicken','beef','cheese','pasta','cream_sauce','teriyaki_sauce','bowl','water','soda','lemonade'];
 
-// ══ خواندن باقی‌مانده از Supabase و محاسبه حداکثر هر غذا ══
+// ══ خواندن موجودی اولیه + کسر سفارش‌های امروز = باقی‌مانده واقعی ══
 async function loadInventoryLimits(){
   itemMaxMap = {};
   try{
-    const res = await supaFetch('/rest/v1/settings?key=eq.inventory_remaining&select=value');
-    if(!res.ok){ console.warn('[Inv] settings error:', res.status); return; }
-    const rows = await res.json();
-    if(!rows || !rows.length){ console.warn('[Inv] inventory_remaining not found'); return; }
+    // ۱. موجودی اولیه از daily_inventory
+    const r1 = await supaFetch('/rest/v1/settings?key=eq.daily_inventory&select=value');
+    if(!r1.ok) return;
+    const rows = await r1.json();
+    if(!rows || !rows.length) return;
+    const inv = JSON.parse(rows[0].value || '{}');
 
-    const remaining = JSON.parse(rows[0].value || '{}');
-    console.log('[Inv] remaining:', JSON.stringify(remaining));
-
-    // تاریخ شمسی امروز
+    // بررسی تاریخ شمسی
     const todayJalali = getJalaliToday();
-    if(remaining._date && remaining._date !== todayJalali){
-      console.warn('[Inv] باقی‌مانده مربوط به تاریخ دیگری است:', remaining._date);
+    if(inv._date && inv._date !== todayJalali){
+      console.warn('[Inv] موجودی مال امروز نیست:', inv._date, '!=', todayJalali);
       return;
     }
 
-    // محاسبه حداکثر سفارش هر آیتم از روی باقی‌مانده مواد اولیه
+    // ۲. سفارش‌های تایید‌شده امروز از online_orders
+    const todayStart = new Date();
+    todayStart.setHours(0,0,0,0);
+    const todayISO = todayStart.toISOString();
+    const r2 = await supaFetch(
+      '/rest/v1/online_orders?select=items,status&created_at=gte.'+encodeURIComponent(todayISO)+
+      '&status=not.in.(draft,rejected)',
+      {headers:{'Accept':'application/json'}}
+    );
+
+    // ۳. محاسبه مصرف واقعی از سفارش‌های تایید‌شده
+    const consumed = {};
+    INV_KEYS.forEach(k => consumed[k] = 0);
+
+    if(r2.ok){
+      const orders = await r2.json();
+      orders.forEach(order => {
+        const items = Array.isArray(order.items) ? order.items : [];
+        items.forEach(it => {
+          const cost = ITEM_COST[it.name];
+          if(!cost) return;
+          INV_KEYS.forEach(k => {
+            if(cost[k]) consumed[k] += cost[k] * (it.qty || 1);
+          });
+        });
+      });
+    }
+    console.log('[Inv] consumed:', JSON.stringify(consumed));
+
+    // ۴. باقی‌مانده = موجودی اولیه − مصرف
+    const remaining = {};
+    INV_KEYS.forEach(k => {
+      const initial = (inv[k] !== undefined && inv[k] !== '') ? Number(inv[k]) : null;
+      if(initial === null){ remaining[k] = null; return; } // بدون محدودیت
+      remaining[k] = Math.max(0, initial - consumed[k]);
+    });
+    console.log('[Inv] remaining:', JSON.stringify(remaining));
+
+    // ۵. محاسبه حداکثر سفارش هر آیتم از روی باقی‌مانده
     menu.forEach(m => {
       const cost = ITEM_COST[m.name];
       if(!cost){ itemMaxMap[m.id] = 99; return; }
@@ -857,9 +897,8 @@ async function loadInventoryLimits(){
       let maxQty = 999;
       INV_KEYS.forEach(k => {
         if(!cost[k]) return;
-        const avail = remaining[k];
-        if(avail === null || avail === undefined) return;
-        const possible = Math.floor(avail / cost[k]);
+        if(remaining[k] === null) return; // بدون محدودیت
+        const possible = Math.floor(remaining[k] / cost[k]);
         if(possible < maxQty) maxQty = possible;
       });
 
@@ -947,17 +986,45 @@ function updateTotal(){
 }
 
 // ══════════ کد تخفیف ══════════
-function applyDiscount(){
+async function applyDiscount(){
   const code=(document.getElementById('discount-code').value||'').trim().toUpperCase();
   const errEl=document.getElementById('discount-err'); errEl.textContent='';
+  const applyBtn=document.querySelector('.discount-apply');
   if(!code){errEl.textContent='کد تخفیف رو وارد کن';return;}
-  const pct=DISCOUNT_CODES[code];
-  if(!pct){errEl.textContent='کد تخفیف معتبر نیست';return;}
-  discountPct=pct; discountCode=code;
-  document.getElementById('discount-input-wrap').style.display='none';
-  document.getElementById('discount-applied-wrap').style.display='block';
-  document.getElementById('discount-applied-txt').textContent=tp(pct)+'٪ تخفیف';
-  updateTotal();
+  if(applyBtn){ applyBtn.disabled=true; applyBtn.textContent='...'; }
+  try{
+    // بررسی کد از Supabase — فعال و استفاده نشده
+    const res = await supaFetch(
+      '/rest/v1/discount_codes?code=eq.'+encodeURIComponent(code)+'&active=eq.true&used=eq.false&select=id,code,percent',
+      {headers:{'Accept':'application/json'}}
+    );
+    if(!res.ok) throw new Error('server error');
+    const rows = await res.json();
+    if(!rows || !rows.length){
+      // چک کن آیا کد وجود دارد ولی قبلاً استفاده شده
+      const res2 = await supaFetch(
+        '/rest/v1/discount_codes?code=eq.'+encodeURIComponent(code)+'&select=used',
+        {headers:{'Accept':'application/json'}}
+      );
+      const rows2 = res2.ok ? await res2.json() : [];
+      if(rows2.length && rows2[0].used){
+        errEl.textContent='این کد قبلاً استفاده شده است';
+      } else {
+        errEl.textContent='کد تخفیف معتبر نیست';
+      }
+      return;
+    }
+    const pct = rows[0].percent;
+    discountPct=pct; discountCode=code;
+    document.getElementById('discount-input-wrap').style.display='none';
+    document.getElementById('discount-applied-wrap').style.display='block';
+    document.getElementById('discount-applied-txt').textContent=tp(pct)+'٪ تخفیف';
+    updateTotal();
+  } catch(e){
+    errEl.textContent='خطا در بررسی کد. دوباره امتحان کن.';
+  } finally{
+    if(applyBtn){ applyBtn.disabled=false; applyBtn.textContent='اعمال'; }
+  }
 }
 function removeDiscount(){
   discountPct=0; discountCode='';
@@ -981,13 +1048,10 @@ function setDelivery(type){
 // ══════════ ثبت سفارش مستقیم (بدون مرحله draft جداگانه) ══════════
 async function saveDraft(){
   const errEl=document.getElementById('form-error'); errEl.textContent='';
-  const btn=document.getElementById('draft-btn');
   const name=(document.getElementById('cust-name').value||'').trim();
   const phone=normalizePhone(document.getElementById('cust-phone').value);
   const note=(document.getElementById('order-note').value||'').trim();
   const address=(document.getElementById('cust-address').value||'').trim();
-
-  // اعتبارسنجی سریع (بدون شبکه) — قبل از disable
   if(!phone||phone.length<10){errEl.textContent='لطفاً شماره موبایل معتبر وارد کنید';return;}
   const items=menu.filter(m=>(qtyMap[m.id]||0)>0).map(m=>({
     itemId:m.id,name:m.name,qty:qtyMap[m.id],unitPrice:Number(m.price),sauces:sauceMap[m.id]||[]
@@ -996,36 +1060,29 @@ async function saveDraft(){
   if(deliveryType==='delivery'&&!address){errEl.textContent='آدرس را برای تحویل درب منزل وارد کنید';return;}
   if(!selectedTime){errEl.textContent='لطفاً یک اسلات زمانی خالی انتخاب کنید';return;}
 
-  // بررسی اسلات گذشته (بدون شبکه)
+  // بررسی اسلات هنوز در آینده
   const [chk_h,chk_m]=selectedTime.split(':').map(Number);
   const chkNow=new Date(); const chkNowMin=chkNow.getHours()*60+chkNow.getMinutes();
   if(chk_h*60+chk_m<chkNowMin+SLOT_MIN_AHEAD){
     errEl.textContent='⛔ این اسلات گذشته است. لطفاً اسلات دیگری انتخاب کن.';
     selectedTime=null; renderSlots(); return;
   }
+  // بررسی ظرفیت اسلات
+  try{ takenSlots=await fetchTakenSlots(); } catch(e){}
+  if((takenSlots[selectedTime]||0)>=SLOT_CAPACITY){
+    errEl.textContent='⛔ متأسفانه این اسلات همین الان پر شد. لطفاً اسلات دیگری انتخاب کن.';
+    selectedTime=null; renderSlots(); return;
+  }
+  // بررسی موجودی
+  const invErrors = await checkOnlineInventory(items);
+  if(invErrors){
+    errEl.innerHTML='⚠️ موجودی کافی نیست:<br><small style="color:var(--text3)">'+invErrors.join('<br>')+'</small>';
+    return;
+  }
 
-  // از اینجا به بعد شبکه لازم داریم — دکمه رو disable کن
-  btn.disabled=true; btn.textContent='در حال بررسی...';
-
+  const btn=document.getElementById('draft-btn');
+  btn.disabled=true; btn.textContent='در حال ثبت...';
   try{
-    // بررسی ظرفیت اسلات و موجودی به‌صورت موازی
-    const [freshSlots, invErrors] = await Promise.all([
-      fetchTakenSlots().catch(()=>takenSlots),
-      checkOnlineInventory(items).catch(()=>null)
-    ]);
-    takenSlots = freshSlots;
-
-    if((takenSlots[selectedTime]||0)>=SLOT_CAPACITY){
-      errEl.textContent='⛔ متأسفانه این اسلات همین الان پر شد. لطفاً اسلات دیگری انتخاب کن.';
-      selectedTime=null; renderSlots();
-      btn.disabled=false; btn.textContent='✅ ثبت سفارش و پرداخت ←'; return;
-    }
-    if(invErrors){
-      errEl.innerHTML='⚠️ موجودی کافی نیست:<br><small style="color:var(--text3)">'+invErrors.join('<br>')+'</small>';
-      btn.disabled=false; btn.textContent='✅ ثبت سفارش و پرداخت ←'; return;
-    }
-
-    btn.textContent='در حال ثبت...';
     const {subtotal,discountAmt,total}=updateTotal();
     const slotCode = generateSlotCode(selectedTime);
     const reservedUntil = new Date(Date.now() + 5*60*1000).toISOString();
@@ -1082,62 +1139,103 @@ function showPaymentScreen(order,items,meta){
     </div>`:''}
   `;
   document.getElementById('receipt-text').value='';
-  document.getElementById('file-drop-text').textContent='برای انتخاب عکس فیش ضربه بزنید';
+  document.getElementById('file-drop-text').textContent='برای انتخاب عکس ضربه بزنید';
   document.getElementById('file-drop').classList.remove('has-file');
   document.getElementById('receipt-preview').style.display='none';
-  selectedFile=null;
+  document.getElementById('upload-btn').style.display='none';
+  document.getElementById('upload-status').textContent='';
+  selectedFile=null; uploadedImageUrl=null;
+  slotLockedForPayment=true; // اسلات انتخابی قفل میشه تا ثبت نهایی
   showScreen('payment-screen');
 }
 
 // ══════════ فیش ══════════
+let uploadedImageUrl = null;
+
 function onFileSelected(e){
   const file=e.target.files[0];
-  if(!file){selectedFile=null;document.getElementById('file-drop').classList.remove('has-file');document.getElementById('receipt-preview').style.display='none';return;}
-  selectedFile=file;
+  const statusEl=document.getElementById('upload-status');
+  const uploadBtn=document.getElementById('upload-btn');
+  if(!file){
+    selectedFile=null; uploadedImageUrl=null;
+    document.getElementById('file-drop').classList.remove('has-file');
+    document.getElementById('receipt-preview').style.display='none';
+    uploadBtn.style.display='none'; statusEl.textContent=''; return;
+  }
+  selectedFile=file; uploadedImageUrl=null;
   document.getElementById('file-drop').classList.add('has-file');
-  document.getElementById('file-drop-text').textContent='✓ '+file.name;
+  document.getElementById('file-drop-text').textContent='\u2713 '+file.name;
   const r=new FileReader();
   r.onload=ev=>{const p=document.getElementById('receipt-preview');p.src=ev.target.result;p.style.display='block';};
   r.readAsDataURL(file);
+  uploadBtn.style.display='block'; uploadBtn.disabled=false;
+  uploadBtn.textContent='\u2B06\uFE0F \u0622\u067E\u0644\u0648\u062F \u0639\u06A9\u0633 \u0641\u06CC\u0634';
+  statusEl.style.color='var(--text3)';
+  statusEl.textContent='\u0639\u06A9\u0633 \u0627\u0646\u062A\u062E\u0627\u0628 \u0634\u062F \u2014 \u0628\u0631\u0627\u06CC \u0622\u067E\u0644\u0648\u062F \u062F\u06A9\u0645\u0647 \u0628\u0627\u0644\u0627 \u0631\u0648 \u0628\u0632\u0646';
 }
-async function uploadReceiptImage(file){
-  const ext=(file.name.split('.').pop()||'jpg').toLowerCase();
-  const path=Date.now()+'_'+Math.random().toString(36).slice(2,8)+'.'+ext;
-  const res=await supaFetch('/storage/v1/object/receipts/'+path,{
-    method:'POST',headers:{'Content-Type':file.type||'image/jpeg'},body:file
-  });
-  if(!res.ok) throw new Error('upload failed: '+res.status);
-  return SUPA_URL+'/storage/v1/object/public/receipts/'+path;
+
+async function doUploadReceipt(){
+  if(!selectedFile) return;
+  const btn=document.getElementById('upload-btn');
+  const statusEl=document.getElementById('upload-status');
+  btn.disabled=true; btn.textContent='\u062F\u0631 \u062D\u0627\u0644 \u0622\u067E\u0644\u0648\u062F...';
+  statusEl.style.color='var(--text3)';
+  statusEl.textContent='\u23F3 \u062F\u0631 \u062D\u0627\u0644 \u0627\u0631\u0633\u0627\u0644 \u0639\u06A9\u0633...';
+  try{
+    const controller=new AbortController();
+    const timer=setTimeout(()=>controller.abort(),60000);
+    const ext=(selectedFile.name.split('.').pop()||'jpg').toLowerCase();
+    const path=Date.now()+'_'+Math.random().toString(36).slice(2,8)+'.'+ext;
+    const res=await fetch(SUPA_URL+'/storage/v1/object/receipts/'+path,{
+      method:'POST',
+      headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':selectedFile.type||'image/jpeg'},
+      body:selectedFile, signal:controller.signal
+    });
+    clearTimeout(timer);
+    if(!res.ok) throw new Error('status '+res.status);
+    uploadedImageUrl=SUPA_URL+'/storage/v1/object/public/receipts/'+path;
+    statusEl.style.color='var(--green)';
+    statusEl.textContent='\u2705 \u0639\u06A9\u0633 \u0628\u0627 \u0645\u0648\u0641\u0642\u06CC\u062A \u0622\u067E\u0644\u0648\u062F \u0634\u062F';
+    btn.textContent='\u2705 \u0622\u067E\u0644\u0648\u062F \u0634\u062F'; btn.disabled=true;
+  } catch(err){
+    uploadedImageUrl=null;
+    statusEl.style.color='var(--red)';
+    statusEl.textContent=err.name==='AbortError'
+      ? '\u26A0\uFE0F \u0622\u067E\u0644\u0648\u062F \u0637\u0648\u0644\u0627\u0646\u06CC \u0634\u062F\u060C \u062F\u0648\u0628\u0627\u0631\u0647 \u0627\u0645\u062A\u062D\u0627\u0646 \u06A9\u0646'
+      : '\u26A0\uFE0F \u0622\u067E\u0644\u0648\u062F \u0646\u0627\u0645\u0648\u0641\u0642 \u0628\u0648\u062F\u060C \u062F\u0648\u0628\u0627\u0631\u0647 \u0627\u0645\u062A\u062D\u0627\u0646 \u06A9\u0646';
+    btn.disabled=false; btn.textContent='\uD83D\uDD04 \u062A\u0644\u0627\u0634 \u0645\u062C\u062F\u062F';
+  }
 }
 
 // ══════════ ثبت نهایی ══════════
 async function finalizeOrder(){
   const errEl=document.getElementById('payment-error'); errEl.textContent='';
-  const btn=document.getElementById('pay-btn');
   const receiptText=(document.getElementById('receipt-text').value||'').trim();
-
-  // اعتبارسنجی سریع — قبل از disable
   if(!receiptText&&!selectedFile){errEl.textContent='حداقل متن یا عکس فیش واریزی رو وارد کن';return;}
   if(!currentDraftId){errEl.textContent='خطا: سفارش پیدا نشد. دوباره از ابتدا ثبت کن.';return;}
-
-  // فوری disable کن
+  const btn=document.getElementById('pay-btn');
   btn.disabled=true; btn.textContent='در حال ثبت نهایی...';
+  // اگر عکس انتخاب شده ولی هنوز آپلود نشده، جلوگیری کن
+  if(selectedFile && !uploadedImageUrl){
+    errEl.textContent='ابتدا دکمه آپلود عکس رو بزن و منتظر تأیید بمون';
+    btn.disabled=false; btn.textContent='\u2705 \u062A\u0623\u06CC\u06CC\u062F \u0646\u0647\u0627\u06CC\u06CC \u0648 \u062B\u0628\u062A \u0633\u0641\u0627\u0631\u0634';
+    return;
+  }
   try{
-    let imageUrl=null;
-    if(selectedFile){
-      btn.textContent='در حال آپلود فیش...';
-      imageUrl=await uploadReceiptImage(selectedFile);
-      btn.textContent='در حال ثبت نهایی...';
-    }
-    const res=await supaFetch('/rest/v1/online_orders?id=eq.'+currentDraftId,{
+    const controller=new AbortController();
+    const timer=setTimeout(()=>controller.abort(),60000);
+    const res=await fetch(SUPA_URL+'/rest/v1/online_orders?id=eq.'+currentDraftId,{
       method:'PATCH',
-      headers:{'Content-Type':'application/json','Prefer':'return=representation'},
-      body:JSON.stringify({status:'pending',receipt_text:receiptText||null,receipt_image_url:imageUrl})
+      headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Content-Type':'application/json','Prefer':'return=representation'},
+      body:JSON.stringify({status:'pending',receipt_text:receiptText||null,receipt_image_url:uploadedImageUrl||null}),
+      signal:controller.signal
     });
-    // کد تخفیف را used=true کن (بدون await)
+    clearTimeout(timer);
+    // کد تخفیف را used=true کن
     if(discountCode){
       supaFetch('/rest/v1/discount_codes?code=eq.'+encodeURIComponent(discountCode),{
-        method:'PATCH',headers:{'Content-Type':'application/json'},
+        method:'PATCH',
+        headers:{'Content-Type':'application/json'},
         body:JSON.stringify({used:true})
       });
     }
@@ -1151,6 +1249,7 @@ async function finalizeOrder(){
     showScreen('success-screen');
     document.getElementById('success-screen').style.display='flex';
     currentDraftId=null;
+    slotLockedForPayment=false; selectedTime=null;
   } catch(e){
     console.error(e);
     errEl.textContent='خطا در ثبت نهایی. دوباره امتحان کن.';
@@ -1216,22 +1315,28 @@ function startTrackPolling(phone){
           lastTrackedStatuses[o.id]=o.status;
         }
       });
-      if(anyChanged){
-        document.getElementById('track-results').innerHTML=orders.map(o=>renderOrderCard(o)).join('');
-      }
-      const hasActive=orders.some(o=>['pending','confirmed','preparing'].includes(o.status));
+      // همیشه UI را آپدیت کن (نه فقط وقتی تغییر داشت)
+      document.getElementById('track-results').innerHTML=orders.map(o=>renderOrderCard(o)).join('');
+      // polling را فقط وقتی همه سفارش‌ها به حالت نهایی رسیدند متوقف کن
+      const hasActive=orders.some(o=>!['ready','delivered','done','completed','rejected','cancelled'].includes(o.status));
       if(!hasActive) stopTrackPolling();
     } catch(e){ /* silent */ }
-  }, 8000);
+  }, 5000);
 }
 
 function showStatusChangeNotif(o){
   const statusMap={
-    confirmed:{label:'تأیید شد ✅',color:'var(--green)'},
-    rejected:{label:'رد شد ❌',color:'var(--red)'},
-    preparing:{label:'در حال آماده‌سازی 👨‍🍳',color:'var(--pink-light)'},
-    ready:{label:'آماده تحویل 🎉',color:'var(--green)'},
-    pending:{label:'در انتظار تأیید ⏳',color:'var(--yellow)'}
+    pending:   {label:'در انتظار تأیید ⏳',        color:'var(--yellow)'},
+    confirmed: {label:'تأیید شد ✅',               color:'var(--green)'},
+    approved:  {label:'تأیید شد ✅',               color:'var(--green)'},
+    paid:      {label:'تأیید شد ✅',               color:'var(--green)'},
+    preparing: {label:'در حال آماده‌سازی 👨‍🍳',    color:'var(--pink-light)'},
+    ready:     {label:'آماده تحویل 🎉',            color:'var(--green)'},
+    delivered: {label:'تحویل داده شد 🎉',          color:'var(--green)'},
+    done:      {label:'تحویل داده شد 🎉',          color:'var(--green)'},
+    completed: {label:'تحویل داده شد 🎉',          color:'var(--green)'},
+    rejected:  {label:'رد شد ❌',                  color:'var(--red)'},
+    cancelled: {label:'لغو شد ❌',                 color:'var(--red)'},
   };
   const st=statusMap[o.status]||{label:o.status,color:'var(--text2)'};
   const notif=document.createElement('div');
@@ -1244,12 +1349,18 @@ function showStatusChangeNotif(o){
 
 function renderOrderCard(o){
   const statusMap={
-    draft:{label:'پیش‌نویس — پرداخت نشده',cls:'status-draft',icon:'📝',steps:[1,0,0,0]},
-    pending:{label:'در انتظار تأیید',cls:'status-pending',icon:'⏳',steps:[1,1,0,0]},
-    confirmed:{label:'تأیید شد',cls:'status-confirmed',icon:'✅',steps:[1,1,1,0]},
-    preparing:{label:'در حال آماده‌سازی',cls:'status-preparing',icon:'👨‍🍳',steps:[1,1,1,0]},
-    ready:{label:'آماده تحویل',cls:'status-ready',icon:'🎉',steps:[1,1,1,1]},
-    rejected:{label:'رد شد',cls:'status-rejected',icon:'❌',steps:[1,0,0,0]}
+    draft:     {label:'پیش‌نویس — پرداخت نشده', cls:'status-draft',     icon:'📝', steps:[1,0,0,0]},
+    pending:   {label:'در انتظار تأیید',          cls:'status-pending',   icon:'⏳', steps:[1,1,0,0]},
+    confirmed: {label:'تأیید شد ✅',              cls:'status-confirmed', icon:'✅', steps:[1,1,1,0]},
+    approved:  {label:'تأیید شد ✅',              cls:'status-confirmed', icon:'✅', steps:[1,1,1,0]},
+    paid:      {label:'تأیید شد ✅',              cls:'status-confirmed', icon:'✅', steps:[1,1,1,0]},
+    preparing: {label:'در حال آماده‌سازی 👨‍🍳',   cls:'status-preparing', icon:'👨‍🍳', steps:[1,1,1,0]},
+    ready:     {label:'آماده تحویل 🎉',           cls:'status-ready',     icon:'🎉', steps:[1,1,1,1]},
+    delivered: {label:'تحویل داده شد 🎉',         cls:'status-ready',     icon:'🎉', steps:[1,1,1,1]},
+    done:      {label:'تحویل داده شد 🎉',         cls:'status-ready',     icon:'🎉', steps:[1,1,1,1]},
+    completed: {label:'تحویل داده شد 🎉',         cls:'status-ready',     icon:'🎉', steps:[1,1,1,1]},
+    rejected:  {label:'رد شد ❌',                 cls:'status-rejected',  icon:'❌', steps:[1,0,0,0]},
+    cancelled: {label:'لغو شد ❌',                cls:'status-rejected',  icon:'❌', steps:[1,0,0,0]},
   };
   const st=statusMap[o.status]||statusMap.pending;
   const items=Array.isArray(o.items)?o.items:[];
