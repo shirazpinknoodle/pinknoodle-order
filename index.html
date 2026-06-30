@@ -306,7 +306,7 @@ body{font-family:Tahoma,sans-serif;background:var(--bg);color:var(--text);min-he
     <div class="card">
       <div class="section-title">⏰ رزرو زمان تحویل *</div>
       <div class="hint" style="margin-top:0;margin-bottom:12px;">
-        هر اسلات ۳ دقیقه — ظرفیت هر اسلات: ۱ سفارش
+        هر اسلات ۲ دقیقه — ظرفیت هر اسلات: ۱ سفارش
       </div>
       <div class="slot-legend">
         <div class="slot-legend-item"><div class="legend-dot legend-free"></div><span>خالی</span></div>
@@ -368,21 +368,11 @@ body{font-family:Tahoma,sans-serif;background:var(--bg);color:var(--text);min-he
   <div class="section">
     <div class="card">
       <div class="section-title">🧾 فیش واریزی</div>
-      <div class="form-group">
-        <label class="form-label">متن یا کد رهگیری (اختیاری)</label>
-        <textarea class="form-textarea" id="receipt-text" placeholder="مثال: کد رهگیری ۱۲۳۴۵۶ - ساعت ۱۴:۳۰" style="min-height:50px;"></textarea>
-      </div>
       <div class="form-group" style="margin-bottom:0;">
-        <label class="form-label">عکس فیش (اختیاری)</label>
-        <div class="file-drop" id="file-drop">
-          <input type="file" id="receipt-file" accept="image/*" onchange="onFileSelected(event)">
-          <div class="file-drop-text" id="file-drop-text">برای انتخاب عکس ضربه بزنید</div>
-        </div>
-        <img id="receipt-preview" class="preview-img" style="display:none;margin-top:8px;">
-        <button class="btn-secondary" id="upload-btn" onclick="doUploadReceipt()" style="display:none;margin-top:10px;">⬆️ آپلود عکس فیش</button>
-        <div id="upload-status" style="margin-top:8px;font-size:12px;min-height:18px;"></div>
+        <label class="form-label">متن یا کد رهگیری (اجباری)</label>
+        <textarea class="form-textarea" id="receipt-text" placeholder="مثال: کد رهگیری ۱۲۳۴۵۶ - ساعت ۱۴:۳۰" style="min-height:120px;"></textarea>
       </div>
-      <div class="hint">حداقل یکی از متن یا عکس فیش رو وارد کن.</div>
+      <div class="hint" style="margin-top:10px;">⏸ آپلود عکس فیش موقتاً به دلیل کندی سایت غیرفعال است. لطفاً متن یا کد رهگیری واریزی رو وارد کن.</div>
     </div>
   </div>
 
@@ -461,7 +451,7 @@ const SLOT_START_H = 20;
 const SLOT_START_M = 10;
 const SLOT_END_H   = 23;
 const SLOT_END_M   = 30;
-const SLOT_MINUTES = 3;
+const SLOT_MINUTES = 2;
 const SLOT_CAPACITY= 1;
 const SLOT_MIN_AHEAD = 30;
 
@@ -1136,11 +1126,6 @@ function showPaymentScreen(order,items,meta){
     </div>`:''}
   `;
   document.getElementById('receipt-text').value='';
-  document.getElementById('file-drop-text').textContent='برای انتخاب عکس ضربه بزنید';
-  document.getElementById('file-drop').classList.remove('has-file');
-  document.getElementById('receipt-preview').style.display='none';
-  document.getElementById('upload-btn').style.display='none';
-  document.getElementById('upload-status').textContent='';
   selectedFile=null; uploadedImageUrl=null;
   slotLockedForPayment=true; // اسلات انتخابی قفل میشه تا ثبت نهایی
   showScreen('payment-screen');
@@ -1208,16 +1193,10 @@ async function doUploadReceipt(){
 async function finalizeOrder(){
   const errEl=document.getElementById('payment-error'); errEl.textContent='';
   const receiptText=(document.getElementById('receipt-text').value||'').trim();
-  if(!receiptText&&!selectedFile){errEl.textContent='حداقل متن یا عکس فیش واریزی رو وارد کن';return;}
+  if(!receiptText){errEl.textContent='وارد کردن متن یا کد رهگیری واریزی اجباری است';return;}
   if(!currentDraftId){errEl.textContent='خطا: سفارش پیدا نشد. دوباره از ابتدا ثبت کن.';return;}
   const btn=document.getElementById('pay-btn');
   btn.disabled=true; btn.textContent='در حال ثبت نهایی...';
-  // اگر عکس انتخاب شده ولی هنوز آپلود نشده، جلوگیری کن
-  if(selectedFile && !uploadedImageUrl){
-    errEl.textContent='ابتدا دکمه آپلود عکس رو بزن و منتظر تأیید بمون';
-    btn.disabled=false; btn.textContent='\u2705 \u062A\u0623\u06CC\u06CC\u062F \u0646\u0647\u0627\u06CC\u06CC \u0648 \u062B\u0628\u062A \u0633\u0641\u0627\u0631\u0634';
-    return;
-  }
   try{
     const controller=new AbortController();
     const timer=setTimeout(()=>controller.abort(),60000);
