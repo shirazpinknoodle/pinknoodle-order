@@ -217,7 +217,8 @@ body{font-family:Tahoma,sans-serif;background:var(--bg);color:var(--text);min-he
   <!-- منو -->
   <div class="section">
     <div class="card">
-      <div class="section-title">🍜 انتخاب از منو</div>
+      <div class="section-title">🍜 منو پینک نودل</div>
+      <div style="font-size:14px;font-weight:700;color:var(--pink-light);margin:-6px 0 14px;line-height:1.8;">با انتخاب هر آیتم، سس آن را انتخاب کنید</div>
       <div id="menu-list"></div>
       <div style="margin-top:12px;">
         <div class="summary-row" id="subtotal-row" style="display:none;">
@@ -480,6 +481,17 @@ async function checkOnlineInventory(items){
 }
 
 const SAUCES = ['سس تری‌یاکی','سس خامه‌ای صورتی','سس گوجوچانگ تند','سس بادام زمینی'];
+
+const ITEM_DESCRIPTIONS = {
+  'نودل مرغ':        'نودل - فیله مرغ ۵۰گرم - پنیر پارمسان جعفری - سس انتخابی',
+  'نودل مرغ پنیری':  'نودل - فیله مرغ ۵۰گرم - پنیر گودا - پنیر پارمسان جعفری - سس انتخابی',
+  'نودل گوشت':       'نودل - فیله مغز ران گوساله ۴۰گرم - پنیر پارمسان جعفری - سس انتخابی',
+  'نودل گوشت پنیری': 'نودل - فیله مغز ران گوساله ۴۰گرم - پنیر گودا - پنیر پارمسان جعفری - سس انتخابی',
+  'نودل پنیری':      'نودل - پنیر گودا - سس قارچ پنیر - پارمسان جعفری - سس انتخابی',
+  'نودل خامه':       'نودل - قارچ - پنیر پارمسان جعفری - سس انتخابی',
+  'نودل خامه‌ای':    'نودل - قارچ - پنیر پارمسان جعفری - سس انتخابی',
+  'نودل تاکی سای':   'نودل - فیله مرغ ۵۰گرم - گرانول بادام‌زمینی - پنیر پارمسان جعفری - سس بادام زمینی',
+};
 
 // ══════════ state ══════════
 let menu         = [];
@@ -928,6 +940,7 @@ function renderMenu(){
       <div class="mi-row">
         <div>
           <div class="mi-name">${m.name}</div>
+          ${ITEM_DESCRIPTIONS[m.name]?`<div style="font-size:11px;color:var(--text3);margin-top:3px;line-height:1.7;">${ITEM_DESCRIPTIONS[m.name]}</div>`:''}
           <div class="mi-price">${fmt(m.price)} تومان ${stockBadge}</div>
         </div>
         <div class="qty-ctrl">
