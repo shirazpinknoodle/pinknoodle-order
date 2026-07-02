@@ -451,13 +451,13 @@ const SUPA_KEY  = 'sb_publishable_-NcF4pRbxXYak1gbfRftMw_bdlGDaXU';
 const PAYMENT_INFO = { bank:'بلو بانک', card:'6219-8618-7915-3624', owner:'محمد شایگان' };
 
 // ══ تنظیمات اسلات‌بندی ══
-const SLOT_START_H = 20;
-const SLOT_START_M = 10;
-const SLOT_END_H   = 23;
-const SLOT_END_M   = 30;
-const SLOT_MINUTES = 2;
+const SLOT_START_H = 20;   // ساعت شروع (۸ شب)
+const SLOT_START_M = 2;    // دقیقه شروع → ۲۰:۰۲
+const SLOT_END_H   = 23;   // ساعت پایان (آخرین سفارش)
+const SLOT_END_M   = 36;   // دقیقه پایان → ۲۳:۳۶
+const SLOT_INTERVAL_SECONDS = 160; // فاصله واقعی بین اسلات‌ها: ۲ دقیقه و ۴۰ ثانیه (نمایش فقط بر اساس ساعت:دقیقه، بدون ثانیه)
 const SLOT_CAPACITY= 1;
-const SLOT_MIN_AHEAD = 30;
+const SLOT_MIN_AHEAD = 12;   // فقط اسلات‌های ۱۲ دقیقه به بعد از الان قابل انتخاب‌اند
 
 // کدهای تخفیف از Supabase خوانده می‌شوند (جدول discount_codes)
 
@@ -599,12 +599,20 @@ function goToTrackAfterSuccess(){
 
 // ══════════ تولید لیست اسلات‌ها ══════════
 function generateAllSlots(){
+  // فاصله واقعی هر اسلات از اسلات بعدی SLOT_INTERVAL_SECONDS (۲ دقیقه و ۴۰ ثانیه) است،
+  // اما چون ثانیه لازم نیست، فقط ساعت:دقیقه نمایش داده می‌شود.
   const slots=[];
-  let h=SLOT_START_H, m=SLOT_START_M;
-  while(h*60+m <= SLOT_END_H*60+SLOT_END_M){
-    slots.push(String(h).padStart(2,'0')+':'+String(m).padStart(2,'0'));
-    m+=SLOT_MINUTES;
-    if(m>=60){h++;m-=60;}
+  const startSec = SLOT_START_H*3600 + SLOT_START_M*60;
+  const endSec   = SLOT_END_H*3600 + SLOT_END_M*60;
+  const seen = new Set();
+  for(let t=startSec; t<=endSec; t+=SLOT_INTERVAL_SECONDS){
+    const h=Math.floor(t/3600);
+    const m=Math.floor((t%3600)/60);
+    const label=String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');
+    if(!seen.has(label)){
+      seen.add(label);
+      slots.push(label);
+    }
   }
   return slots;
 }
