@@ -425,7 +425,10 @@ body{font-family:Tahoma,sans-serif;background:var(--bg);color:var(--text);min-he
     <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#22C55E" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
   </div>
   <div class="success-title">سفارش شما نهایی شد ✓</div>
-  <div class="success-sub">سفارش و فیش پرداختی ارسال شد.<br>به محض بررسی توسط صندوق، آماده‌سازی شروع می‌شه.</div>
+  <div class="success-sub">سفارش و فیش پرداختی ارسال شد.<br>به محض بررسی توسط صندوق، تایید می‌شه.</div>
+  <div style="font-size:16px;font-weight:800;color:var(--pink-light);margin-top:10px;line-height:1.9;">
+    زمان انتخابی شما، زمان حضور شما در صف تحویل‌گیری می‌باشد.
+  </div>
   <div class="order-code-box">
     <div class="order-code-label">شماره سفارش</div>
     <div class="order-code-val" id="success-order-num">—</div>
@@ -1397,6 +1400,7 @@ function renderOrderCard(o){
         ${o.pos_order_no?`<div style="font-size:11px;color:var(--pink-light);font-weight:700;white-space:nowrap;">🧾 شماره صندوق: ${tp(o.pos_order_no)}</div>`:''}
       </div>
     </div>
+    ${o.delivery_time?`<div style="font-size:13px;font-weight:800;color:var(--pink-light);line-height:1.9;margin-bottom:10px;">زمان انتخابی شما، زمان حضور شما در صف تحویل‌گیری می‌باشد.</div>`:''}
     ${o.status!=='rejected'?`<div class="step-bar">${stepsHtml}</div>`:''}
     <hr class="track-divider">
     ${itemsHtml||'—'}
