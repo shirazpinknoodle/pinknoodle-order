@@ -350,6 +350,7 @@ body{font-family:Tahoma,sans-serif;background:var(--bg);color:var(--text);min-he
     <div class="card">
       <div class="section-title">📋 خلاصه سفارش شما</div>
       <div id="payment-summary"></div>
+      <button class="btn-secondary" onclick="editOrder()" style="margin-top:12px;">✏️ ویرایش سفارش (غذا / ساعت / مشخصات)</button>
     </div>
   </div>
 
@@ -360,6 +361,10 @@ body{font-family:Tahoma,sans-serif;background:var(--bg);color:var(--text);min-he
       <div class="pay-row">
         <span class="pay-label">شماره کارت</span>
         <span><span class="pay-value" id="pay-card"></span><button class="copy-btn" onclick="copyCard()">کپی</button></span>
+      </div>
+      <div class="pay-row">
+        <span class="pay-label">شماره کارت ۲</span>
+        <span><span class="pay-value" id="pay-card2"></span><button class="copy-btn" onclick="copyCard2()">کپی</button></span>
       </div>
       <div class="pay-row"><span class="pay-label">به نام</span><span class="pay-value" id="pay-owner"></span></div>
       <div class="hint">مبلغ سفارش رو به این شماره کارت واریز کن و فیش رو پایین آپلود کن.</div>
@@ -449,7 +454,7 @@ body{font-family:Tahoma,sans-serif;background:var(--bg);color:var(--text);min-he
 // ══════════ تنظیمات ══════════
 const SUPA_URL  = 'https://gbymdspqphkoedmvinwf.supabase.co';
 const SUPA_KEY  = 'sb_publishable_-NcF4pRbxXYak1gbfRftMw_bdlGDaXU';
-const PAYMENT_INFO = { bank:'بلو بانک', card:'6219-8618-7915-3624', owner:'محمد شایگان' };
+const PAYMENT_INFO = { bank:'بلو بانک', card:'6219-8618-7915-3624', card2:'5041-7212-2080-0859', owner:'محمد شایگان' };
 
 // ══ تنظیمات اسلات‌بندی ══
 const SLOT_START_H = 20;   // ساعت شروع (۸ شب)
@@ -511,6 +516,7 @@ let currentDraftId = null;
 let lastPhone    = '';
 let lastTrackCode = '';
 let takenSlots   = {};
+let isEditingDraft = false; // آیا در حالت ویرایش یک سفارش (draft) موجود هستیم
 
 // ══════════ ابزارها ══════════
 
@@ -565,7 +571,7 @@ function showScreen(id){
   if(!el) return;
   el.style.display=(id==='landing-screen'||id==='success-screen')?'flex':'block';
 }
-function showLanding(){ stopTrackPolling(); stopInventoryPolling(); slotLockedForPayment=false; showScreen('landing-screen'); }
+function showLanding(){ isEditingDraft=false; stopTrackPolling(); stopInventoryPolling(); slotLockedForPayment=false; showScreen('landing-screen'); }
 function showTrack(){
   showScreen('track-screen');
   if(lastPhone) document.getElementById('track-phone').value=lastPhone;
@@ -588,10 +594,27 @@ function stopInventoryPolling(){
 }
 
 function goToOrder(){
+  isEditingDraft=false;
+  currentDraftId=null;
+  const btn=document.getElementById('draft-btn');
+  if(btn) btn.textContent='✅ ثبت سفارش و پرداخت ←';
   showScreen('order-screen');
   loadSlots(false);
   startInventoryPolling();
 }
+
+// ورود به حالت ویرایش سفارش (draft) موجود از صفحه پرداخت
+function editOrder(){
+  isEditingDraft = true;
+  slotLockedForPayment = false;
+  const errEl=document.getElementById('form-error'); if(errEl) errEl.textContent='';
+  const btn=document.getElementById('draft-btn');
+  if(btn){ btn.disabled=false; btn.textContent='💾 ذخیره تغییرات و بازگشت به پرداخت'; }
+  showScreen('order-screen');
+  loadSlots(false);
+  startInventoryPolling();
+}
+
 function goToTrackAfterSuccess(){
   document.getElementById('track-phone').value=lastPhone;
   showScreen('track-screen');
@@ -617,7 +640,9 @@ function generateAllSlots(){
 }
 
 // ══════════ گرفتن اسلات‌های پر از Supabase ══════════
-async function fetchTakenSlots(){
+// excludeId: اگر پاس داده شود، سفارش با این id از شمارش اسلات‌های پر حذف می‌شود
+// (برای زمانی که کاربر در حال ویرایش سفارش خودش است و اسلات فعلی‌اش نباید «پر» نمایش داده شود)
+async function fetchTakenSlots(excludeId){
   const now = new Date().toISOString();
   const validSlots = new Set(generateAllSlots());
   const taken = {};
@@ -627,13 +652,14 @@ async function fetchTakenSlots(){
   const todayISO = todayStart.toISOString();
 
   const res = await supaFetch(
-    '/rest/v1/online_orders?select=delivery_time,status,reserved_until&created_at=gte.'+encodeURIComponent(todayISO),
+    '/rest/v1/online_orders?select=id,delivery_time,status,reserved_until&created_at=gte.'+encodeURIComponent(todayISO),
     {headers:{'Accept':'application/json'}}
   );
   if(!res.ok) throw new Error('server '+res.status);
   const rows = await res.json();
 
   rows.forEach(r=>{
+    if(excludeId && r.id===excludeId) return;
     if(!r.delivery_time) return;
     const t = String(r.delivery_time).substring(0,5);
     if(!validSlots.has(t)) return;
@@ -659,11 +685,11 @@ async function loadSlots(showRefreshAnim){
   }
   if(!_slotAutoRefreshTimer){
     _slotAutoRefreshTimer = setInterval(async()=>{
-      try{ takenSlots=await fetchTakenSlots(); renderSlots(); } catch(e){}
+      try{ takenSlots=await fetchTakenSlots(isEditingDraft?currentDraftId:null); renderSlots(); } catch(e){}
     }, 30000);
   }
   try{
-    takenSlots=await fetchTakenSlots();
+    takenSlots=await fetchTakenSlots(isEditingDraft?currentDraftId:null);
     renderSlots();
     const now=new Date();
     document.getElementById('last-refresh-txt').textContent=
@@ -734,7 +760,7 @@ async function selectSlot(slotTime){
   const refreshBtn=document.getElementById('slot-refresh-btn');
   if(refreshBtn){refreshBtn.disabled=true;}
   try{
-    takenSlots=await fetchTakenSlots();
+    takenSlots=await fetchTakenSlots(isEditingDraft?currentDraftId:null);
   } catch(e){ }
   finally{
     if(refreshBtn){refreshBtn.disabled=false;}
@@ -755,6 +781,7 @@ async function loadMenu(){
   showScreen('empty-state');
   document.getElementById('pay-bank').textContent=PAYMENT_INFO.bank;
   document.getElementById('pay-card').textContent=PAYMENT_INFO.card;
+  document.getElementById('pay-card2').textContent=PAYMENT_INFO.card2;
   document.getElementById('pay-owner').textContent=PAYMENT_INFO.owner;
   document.getElementById('main-header').style.display='block';
   let res;
@@ -1044,13 +1071,15 @@ async function saveDraft(){
   if(deliveryType==='delivery'&&!address){errEl.textContent='آدرس را برای تحویل درب منزل وارد کنید';return;}
   if(!selectedTime){errEl.textContent='لطفاً یک اسلات زمانی خالی انتخاب کنید';return;}
 
+  const isEdit = isEditingDraft && !!currentDraftId;
+
   const [chk_h,chk_m]=selectedTime.split(':').map(Number);
   const chkNow=new Date(); const chkNowMin=chkNow.getHours()*60+chkNow.getMinutes();
   if(chk_h*60+chk_m<chkNowMin+SLOT_MIN_AHEAD){
     errEl.textContent='⛔ این اسلات گذشته است. لطفاً اسلات دیگری انتخاب کن.';
     selectedTime=null; renderSlots(); return;
   }
-  try{ takenSlots=await fetchTakenSlots(); } catch(e){}
+  try{ takenSlots=await fetchTakenSlots(isEdit?currentDraftId:null); } catch(e){}
   if((takenSlots[selectedTime]||0)>=SLOT_CAPACITY){
     errEl.textContent='⛔ متأسفانه این اسلات همین الان پر شد. لطفاً اسلات دیگری انتخاب کن.';
     selectedTime=null; renderSlots(); return;
@@ -1062,23 +1091,35 @@ async function saveDraft(){
   }
 
   const btn=document.getElementById('draft-btn');
-  btn.disabled=true; btn.textContent='در حال ثبت...';
+  btn.disabled=true; btn.textContent=isEdit?'در حال ذخیره تغییرات...':'در حال ثبت...';
   try{
     const {subtotal,discountAmt,total}=updateTotal();
-    const slotCode = generateSlotCode(selectedTime);
     const reservedUntil = new Date(Date.now() + 5*60*1000).toISOString();
+    // در حالت ویرایش، کد پیگیری قبلی (slot_code) حفظ می‌شود و تغییر نمی‌کند
+    const slotCode = isEdit ? (lastTrackCode || generateSlotCode(selectedTime)) : generateSlotCode(selectedTime);
     const body={
       customer_name:name||null,customer_phone:phone,items,total,subtotal,
       discount_code:discountCode||null,discount_pct:discountPct||null,discount_amt:discountAmt||null,
       note:note||null,delivery_type:deliveryType,
       address:deliveryType==='delivery'?address:null,
-      delivery_time:selectedTime,status:'draft',
-      slot_code:slotCode,
+      delivery_time:selectedTime,
       reserved_until:reservedUntil
     };
-    const res=await supaFetch('/rest/v1/online_orders',{
-      method:'POST',headers:{'Content-Type':'application/json','Prefer':'return=representation'},body:JSON.stringify(body)
-    });
+    if(!isEdit){
+      body.status='draft';
+      body.slot_code=slotCode;
+    }
+
+    let res;
+    if(isEdit){
+      res=await supaFetch('/rest/v1/online_orders?id=eq.'+currentDraftId,{
+        method:'PATCH',headers:{'Content-Type':'application/json','Prefer':'return=representation'},body:JSON.stringify(body)
+      });
+    } else {
+      res=await supaFetch('/rest/v1/online_orders',{
+        method:'POST',headers:{'Content-Type':'application/json','Prefer':'return=representation'},body:JSON.stringify(body)
+      });
+    }
     if(!res.ok) throw new Error('server '+res.status+': '+(await res.text().catch(()=>'')));
     const data=await res.json();
     const saved=Array.isArray(data)?data[0]:data;
@@ -1087,11 +1128,12 @@ async function saveDraft(){
     lastTrackCode = trackCode;
     currentDraftId=saved?.id; lastPhone=phone;
     if(selectedTime){ takenSlots[selectedTime]=(takenSlots[selectedTime]||0)+1; }
+    isEditingDraft=false;
     showPaymentScreen(saved,items,{subtotal,discountAmt,total,discountCode,discountPct,time:selectedTime,deliveryType,address,name,phone,trackCode,trackCodeDisplay});
   } catch(e){
     console.error(e);
-    errEl.textContent='خطا در ثبت. اتصال اینترنت رو بررسی کن.';
-    btn.disabled=false; btn.textContent='✅ ثبت سفارش و پرداخت ←';
+    errEl.textContent=isEdit?'خطا در ذخیره تغییرات. اتصال اینترنت رو بررسی کن.':'خطا در ثبت. اتصال اینترنت رو بررسی کن.';
+    btn.disabled=false; btn.textContent=isEdit?'💾 ذخیره تغییرات و بازگشت به پرداخت':'✅ ثبت سفارش و پرداخت ←';
   }
 }
 
@@ -1393,6 +1435,13 @@ async function resumeDraft(orderId){
 
 function copyCard(){
   navigator.clipboard.writeText(PAYMENT_INFO.card.replace(/-/g,''));
+  const btn=event.target, old=btn.textContent;
+  btn.textContent='کپی شد ✓';
+  setTimeout(()=>btn.textContent=old,1500);
+}
+
+function copyCard2(){
+  navigator.clipboard.writeText(PAYMENT_INFO.card2.replace(/-/g,''));
   const btn=event.target, old=btn.textContent;
   btn.textContent='کپی شد ✓';
   setTimeout(()=>btn.textContent=old,1500);
