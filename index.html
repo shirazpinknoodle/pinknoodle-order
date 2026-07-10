@@ -14,13 +14,11 @@
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0;}
 body{font-family:Tahoma,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;max-width:430px;margin:0 auto;padding:0 0 48px;}
-
 .header{padding:28px 20px 16px;text-align:center;background-image:radial-gradient(circle at 20% 20%,rgba(236,72,153,.18),transparent 50%);}
 .brand{font-size:24px;font-weight:700;}.brand span{color:var(--pink);}
 .brand-sub{color:var(--text3);font-size:13px;margin-top:4px;}
 .header-links{display:flex;gap:16px;justify-content:center;margin-top:10px;font-size:12px;}
 .header-links a{color:var(--text3);text-decoration:none;}
-
 .section{padding:0 16px;margin-top:18px;}
 .card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;}
 .section-title{font-size:14px;font-weight:600;color:var(--text2);margin-bottom:12px;display:flex;align-items:center;gap:6px;}
@@ -39,8 +37,6 @@ body{font-family:Tahoma,sans-serif;background:var(--bg);color:var(--text);min-he
 .spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--pink);border-radius:50%;margin:0 auto 12px;animation:spin .8s linear infinite;}
 .spinner-sm{width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--pink);border-radius:50%;display:inline-block;animation:spin .8s linear infinite;vertical-align:middle;margin-left:6px;}
 @keyframes spin{to{transform:rotate(360deg);}}
-
-/* ══ صفحه اول ══ */
 #landing-screen{display:none;flex-direction:column;align-items:center;padding:0 16px 20px;}
 .landing-cards{display:flex;flex-direction:column;gap:12px;width:100%;margin-top:14px;}
 .landing-card{background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--radius);padding:20px 18px;cursor:pointer;display:flex;align-items:center;gap:16px;}
@@ -53,8 +49,6 @@ body{font-family:Tahoma,sans-serif;background:var(--bg);color:var(--text);min-he
 .open-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:blink 1.4s infinite;}
 @keyframes blink{0%,100%{opacity:1;}50%{opacity:.3;}}
 @keyframes slideDown{from{opacity:0;transform:translateY(-16px);}to{opacity:1;transform:translateY(0);}}
-
-/* ══ منو ══ */
 .menu-item{border-bottom:1px solid var(--border);padding:12px 0;}
 .menu-item:last-child{border-bottom:none;}
 .mi-name{font-size:14px;font-weight:600;}
@@ -69,15 +63,11 @@ body{font-family:Tahoma,sans-serif;background:var(--bg);color:var(--text);min-he
 .sauce-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;}
 .sauce-chip{background:var(--bg4);border:1px solid var(--border);border-radius:20px;padding:4px 12px;font-size:11px;color:var(--text3);cursor:pointer;}
 .sauce-chip.active{background:rgba(236,72,153,.2);border-color:var(--pink);color:var(--pink-light);}
-
-/* تخفیف */
 .discount-row{display:flex;gap:8px;}
 .discount-row .form-input{flex:1;}
 .discount-apply{padding:0 16px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text2);font-size:13px;font-family:inherit;cursor:pointer;font-weight:600;white-space:nowrap;}
 .discount-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);border-radius:20px;padding:5px 12px;font-size:12px;color:var(--green);}
 .remove-discount{background:none;border:none;color:var(--green);cursor:pointer;font-size:14px;padding:0;line-height:1;}
-
-/* ══ اسلات‌های زمان‌بندی ══ */
 .slot-loading{text-align:center;padding:20px;color:var(--text3);font-size:13px;}
 .slot-legend{display:flex;gap:14px;margin-bottom:12px;flex-wrap:wrap;}
 .slot-legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text3);}
@@ -86,31 +76,27 @@ body{font-family:Tahoma,sans-serif;background:var(--bg);color:var(--text);min-he
 .legend-taken{background:rgba(244,63,94,.15);border:1px solid rgba(244,63,94,.3);}
 .legend-selected{background:linear-gradient(135deg,#EC4899,#BE185D);}
 .legend-past{background:var(--bg);border:1px solid var(--border);}
-
+.legend-locked{background:rgba(160,124,141,.12);border:1px solid rgba(160,124,141,.3);}
 .slots-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
 .slot-btn{padding:8px 4px;border-radius:8px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);font-size:12px;font-family:inherit;cursor:pointer;text-align:center;transition:all .15s;position:relative;line-height:1.3;}
-.slot-btn:hover:not(.slot-taken):not(.slot-past){border-color:var(--pink);background:rgba(236,72,153,.12);}
+.slot-btn:hover:not(.slot-taken):not(.slot-past):not(.slot-locked){border-color:var(--pink);background:rgba(236,72,153,.12);}
 .slot-btn.slot-selected{background:linear-gradient(135deg,#EC4899,#BE185D);border-color:var(--pink);color:#fff;font-weight:700;box-shadow:0 2px 10px rgba(236,72,153,.4);}
 .slot-btn.slot-taken{background:rgba(244,63,94,.08);border-color:rgba(244,63,94,.25);color:var(--red);cursor:not-allowed;opacity:.75;pointer-events:none;}
 .slot-btn.slot-past{background:var(--bg);border-color:var(--border);color:var(--text3);cursor:not-allowed;opacity:.45;pointer-events:none;}
+.slot-btn.slot-locked{background:var(--bg);border-color:var(--border);color:var(--text3);cursor:not-allowed;opacity:.4;pointer-events:none;}
 .slot-time{font-size:12px;font-weight:600;}
 .slot-status{font-size:10px;margin-top:2px;}
 .slot-taken .slot-status{color:var(--red);}
 .slot-selected .slot-status{color:rgba(255,255,255,.85);}
 .slot-free .slot-status{color:var(--text3);}
-
 .slot-refresh{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text3);margin-top:10px;cursor:pointer;background:none;border:none;font-family:inherit;padding:0;}
 .slot-refresh:hover{color:var(--pink-light);}
 .last-refresh-txt{font-size:10px;color:var(--text3);margin-top:6px;}
-
-/* خلاصه */
 .summary-row{display:flex;justify-content:space-between;font-size:13px;padding:7px 0;border-bottom:1px solid var(--border);}
 .summary-row:last-child{border-bottom:none;}
 .summary-label{color:var(--text3);}
 .total-row{display:flex;justify-content:space-between;align-items:center;padding:14px 0 4px;font-size:16px;font-weight:700;border-top:1px solid var(--border);margin-top:6px;}
 .total-row span:last-child{color:var(--pink-light);}
-
-/* پرداخت */
 .pay-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;}
 .pay-row:last-child{border-bottom:none;}
 .pay-label{color:var(--text3);}
@@ -121,8 +107,6 @@ body{font-family:Tahoma,sans-serif;background:var(--bg);color:var(--text);min-he
 .file-drop input{position:absolute;inset:0;opacity:0;cursor:pointer;}
 .file-drop-text{font-size:12px;color:var(--text3);}
 .preview-img{max-width:100%;max-height:160px;border-radius:10px;margin-top:10px;}
-
-/* step bar */
 .step-bar{display:flex;align-items:center;margin:16px 0 8px;}
 .step{flex:1;display:flex;flex-direction:column;align-items:center;position:relative;}
 .step:not(:last-child)::after{content:'';position:absolute;top:13px;right:-50%;width:100%;height:2px;background:var(--border);z-index:0;}
@@ -132,8 +116,6 @@ body{font-family:Tahoma,sans-serif;background:var(--bg);color:var(--text);min-he
 .step.active .step-dot{border-color:var(--pink);color:var(--pink);}
 .step-label{font-size:10px;color:var(--text3);margin-top:5px;text-align:center;}
 .step.done .step-label,.step.active .step-label{color:var(--text2);}
-
-/* وضعیت سفارش */
 .status-badge{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:20px;font-size:13px;font-weight:600;}
 .status-draft{background:rgba(160,124,141,.12);border:1px solid rgba(160,124,141,.3);color:var(--text3);}
 .status-pending{background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.3);color:var(--yellow);}
@@ -144,8 +126,6 @@ body{font-family:Tahoma,sans-serif;background:var(--bg);color:var(--text);min-he
 .track-order-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-top:14px;}
 .track-order-num{font-size:18px;font-weight:700;color:var(--pink-light);margin-bottom:4px;}
 .track-divider{border:none;border-top:1px solid var(--border);margin:12px 0;}
-
-/* موفقیت */
 #success-screen{display:none;flex-direction:column;align-items:center;padding:60px 24px;text-align:center;}
 .success-icon{width:72px;height:72px;border-radius:50%;background:rgba(34,197,94,.15);display:flex;align-items:center;justify-content:center;margin-bottom:18px;}
 .success-title{font-size:18px;font-weight:700;margin-bottom:8px;}
@@ -154,11 +134,8 @@ body{font-family:Tahoma,sans-serif;background:var(--bg);color:var(--text);min-he
 .order-code-label{font-size:11px;color:var(--text3);margin-bottom:6px;}
 .order-code-val{font-size:22px;font-weight:700;color:var(--pink-light);letter-spacing:2px;}
 .order-code-sub{font-size:11px;color:var(--text3);margin-top:6px;}
-
-/* alert box */
 .alert-info{background:rgba(236,72,153,.08);border:1px solid rgba(236,72,153,.25);color:var(--pink-light);border-radius:var(--radius-sm);padding:12px 14px;font-size:12px;line-height:1.8;}
 .alert-warning{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);color:var(--yellow);border-radius:var(--radius-sm);padding:12px 14px;font-size:12px;line-height:1.8;}
-
 .footer-links{text-align:center;padding:18px 0 32px;display:flex;flex-direction:column;gap:8px;}
 .footer-links a{color:var(--text3);text-decoration:none;font-size:12px;}
 .empty-state{text-align:center;padding:60px 20px;color:var(--text3);}
@@ -166,13 +143,11 @@ body{font-family:Tahoma,sans-serif;background:var(--bg);color:var(--text);min-he
 </head>
 <body>
 
-<!-- لودر -->
 <div id="loader" style="display:flex;flex-direction:column;align-items:center;padding-top:90px;">
   <div class="spinner"></div>
   <div style="font-size:22px;font-weight:700;color:#EC4899;margin-top:8px;">به Pink Noodle خوش اومدی 🌸</div>
 </div>
 
-<!-- هدر -->
 <div id="main-header" class="header" style="display:none;">
   <div class="brand">Pink<span> Noodle</span></div>
   <div class="brand-sub">سفارش آنلاین</div>
@@ -182,7 +157,6 @@ body{font-family:Tahoma,sans-serif;background:var(--bg);color:var(--text);min-he
   </div>
 </div>
 
-<!-- ══ صفحه اول (لندینگ) ══ -->
 <div id="landing-screen" style="display:none;flex-direction:column;align-items:center;padding:0 16px 20px;">
   <div style="width:100%;">
     <div class="alert-info" style="margin-top:16px;">
@@ -208,13 +182,11 @@ body{font-family:Tahoma,sans-serif;background:var(--bg);color:var(--text);min-he
   </div>
 </div>
 
-<!-- ══ صفحه ۲: فرم سفارش ══ -->
 <div id="order-screen" style="display:none;">
   <div class="section">
     <button class="back-btn" onclick="showLanding()">← بازگشت</button>
   </div>
 
-  <!-- منو -->
   <div class="section">
     <div class="card">
       <div class="section-title">🍜 منو پینک نودل</div>
@@ -233,7 +205,6 @@ body{font-family:Tahoma,sans-serif;background:var(--bg);color:var(--text);min-he
     </div>
   </div>
 
-  <!-- توضیحات -->
   <div class="section">
     <div class="card">
       <div class="section-title">📝 توضیحات (اختیاری)</div>
@@ -241,7 +212,6 @@ body{font-family:Tahoma,sans-serif;background:var(--bg);color:var(--text);min-he
     </div>
   </div>
 
-  <!-- کد تخفیف -->
   <div class="section">
     <div class="card">
       <div class="section-title">🎟️ کد تخفیف</div>
@@ -262,7 +232,6 @@ body{font-family:Tahoma,sans-serif;background:var(--bg);color:var(--text);min-he
     </div>
   </div>
 
-  <!-- مشخصات -->
   <div class="section">
     <div class="card">
       <div class="section-title">👤 مشخصات شما</div>
@@ -278,7 +247,6 @@ body{font-family:Tahoma,sans-serif;background:var(--bg);color:var(--text);min-he
     </div>
   </div>
 
-  <!-- نوع تحویل -->
   <div class="section">
     <div class="card">
       <div class="section-title">🛵 نوع تحویل *</div>
@@ -302,18 +270,18 @@ body{font-family:Tahoma,sans-serif;background:var(--bg);color:var(--text);min-he
     </div>
   </div>
 
-  <!-- ══ زمان تحویل — اسلات‌های رزرو ══ -->
   <div class="section">
     <div class="card">
       <div class="section-title">⏰ رزرو زمان تحویل *</div>
-      <div class="hint" style="margin-top:0;margin-bottom:12px;">
-        هر اسلات ۲ دقیقه — ظرفیت هر اسلات: ۱ سفارش
+      <div class="hint" style="margin-top:0;margin-bottom:12px;" id="slot-interval-hint">
+        ظرفیت هر اسلات: ۱ سفارش
       </div>
       <div class="slot-legend">
         <div class="slot-legend-item"><div class="legend-dot legend-free"></div><span>خالی</span></div>
         <div class="slot-legend-item"><div class="legend-dot legend-taken"></div><span>پر شده</span></div>
         <div class="slot-legend-item"><div class="legend-dot legend-selected"></div><span>انتخاب شما</span></div>
-        <div class="slot-legend-item"><div class="legend-dot legend-past"></div><span>گذشته</span></div>
+        <div class="slot-legend-item"><div class="legend-dot legend-locked"></div><span>مخصوص صندوق</span></div>
+        <div class="slot-legend-item"><div class="legend-dot legend-past"></div><span>گذشته/قفل</span></div>
       </div>
       <div id="slots-container">
         <div class="slot-loading"><div class="spinner-sm"></div> در حال بارگذاری اسلات‌ها...</div>
@@ -326,7 +294,6 @@ body{font-family:Tahoma,sans-serif;background:var(--bg);color:var(--text);min-he
     </div>
   </div>
 
-  <!-- دکمه -->
   <div class="section">
     <div class="card">
       <div class="err" id="form-error"></div>
@@ -340,7 +307,6 @@ body{font-family:Tahoma,sans-serif;background:var(--bg);color:var(--text);min-he
   </div>
 </div>
 
-<!-- ══ صفحه ۳: پرداخت ══ -->
 <div id="payment-screen" style="display:none;">
   <div class="section">
     <button class="back-btn" onclick="showLanding()">← بازگشت</button>
@@ -399,7 +365,6 @@ body{font-family:Tahoma,sans-serif;background:var(--bg);color:var(--text);min-he
   </div>
 </div>
 
-<!-- ══ صفحه ۴: پیگیری ══ -->
 <div id="track-screen" style="display:none;">
   <div class="section" style="margin-top:10px;">
     <button class="back-btn" onclick="showLanding()">← بازگشت</button>
@@ -419,7 +384,6 @@ body{font-family:Tahoma,sans-serif;background:var(--bg);color:var(--text);min-he
   </div>
 </div>
 
-<!-- ══ صفحه ۵: موفقیت ══ -->
 <div id="success-screen">
   <div class="success-icon">
     <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#22C55E" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
@@ -447,33 +411,90 @@ body{font-family:Tahoma,sans-serif;background:var(--bg);color:var(--text);min-he
   <button class="btn-secondary" onclick="goToTrackAfterSuccess()" style="margin-top:10px;max-width:280px;">🔍 پیگیری سفارش</button>
 </div>
 
-<!-- خطا -->
 <div id="empty-state" class="empty-state" style="display:none;">
   <div style="font-size:34px;margin-bottom:10px;">🌸</div>
   <div id="empty-state-msg" style="color:#EC4899;font-weight:600;">به Pink Noodle خوش اومدی</div>
 </div>
 
 <script>
-// ══════════ تنظیمات ══════════
 const SUPA_URL  = 'https://gbymdspqphkoedmvinwf.supabase.co';
 const SUPA_KEY  = 'sb_publishable_-NcF4pRbxXYak1gbfRftMw_bdlGDaXU';
 const PAYMENT_INFO = { bank:'بلو بانک', card:'6219-8618-7915-3624', card2:'5041-7212-2080-0859', owner:'محمد شایگان' };
 
-// ══ تنظیمات اسلات‌بندی ══
-const SLOT_START_H = 20;   // ساعت شروع (۸ شب)
-const SLOT_START_M = 2;    // دقیقه شروع → ۲۰:۰۲
-const SLOT_END_H   = 23;   // ساعت پایان (آخرین سفارش)
-const SLOT_END_M   = 36;   // دقیقه پایان → ۲۳:۳۶
-const SLOT_INTERVAL_SECONDS = 160; // فاصله واقعی بین اسلات‌ها: ۲ دقیقه و ۴۰ ثانیه (نمایش فقط بر اساس ساعت:دقیقه، بدون ثانیه)
-const SLOT_CAPACITY= 1;
-const SLOT_MIN_AHEAD = 12;   // فقط اسلات‌های ۱۲ دقیقه به بعد از الان قابل انتخاب‌اند
+// ══════════════════════════════════════════════════════════════
+// ══ ماژول اسلات‌بندی جدید (ظرفیت متغیر + سهمیه کانال + قفل) ══
+// این بلوک دقیقاً باید با نسخه‌ی داخل فایل صندوق یکسان بماند
+// ══════════════════════════════════════════════════════════════
+const SLOT_CAPACITY = 1;
 
-// کدهای تخفیف از Supabase خوانده می‌شوند (جدول discount_codes)
+// بازه‌های ظرفیت آشپزخانه: [شروع(دقیقه از نیمه‌شب), پایان(دقیقه), فاصله(دقیقه)]
+const SLOT_CAPACITY_WINDOWS = [
+  [20*60+0,  20*60+30, 2.5],
+  [20*60+30, 23*60+0,  3],
+  [23*60+0,  23*60+40, 2.5]
+];
 
-// ══ بررسی موجودی هنگام submit — از itemMaxMap (دقیقاً مطابق صندوق) ══
+// بازه‌های سهمیه‌ی کانال: [شروع, پایان, درصد صندوق]
+const SLOT_QUOTA_WINDOWS = [
+  [20*60+0,  20*60+30, 80],
+  [20*60+30, 21*60+0,  50],
+  [21*60+0,  22*60+30, 20],
+  [22*60+30, 23*60+0,  50],
+  [23*60+0,  23*60+40, 80]
+];
+
+// بازه‌های قفل آنلاین: [شروع, پایان, حداقل فاصله لازم تا اسلات (دقیقه)]
+const ONLINE_LOCK_WINDOWS = [
+  [20*60+0,  20*60+30, 20],
+  [20*60+30, 21*60+0,  30],
+  [21*60+0,  22*60+30, 45],
+  [22*60+30, 23*60+0,  30],
+  [23*60+0,  23*60+40, 20]
+];
+
+function generateAllSlots(){
+  const slots=[]; const seen=new Set();
+  SLOT_CAPACITY_WINDOWS.forEach(([segStart,segEnd,intervalMin])=>{
+    const stepSec = Math.round(intervalMin*60);
+    for(let t=Math.round(segStart*60); t<=Math.round(segEnd*60); t+=stepSec){
+      const h=Math.floor(t/3600), m=Math.floor((t%3600)/60);
+      const label=String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');
+      if(!seen.has(label)){ seen.add(label); slots.push(label); }
+    }
+  });
+  return slots;
+}
+
+// برچسب کانال هر اسلات: 'pos' یا 'online' — با الگوریتم پخش یکنواخت (Bresenham)
+function getSlotChannelMap(){
+  const map = {};
+  SLOT_QUOTA_WINDOWS.forEach(([winStart,winEnd,posPct])=>{
+    const winSlots = generateAllSlots().filter(t=>{
+      const [h,m]=t.split(':').map(Number);
+      const min=h*60+m;
+      return min>=winStart && min<winEnd;
+    });
+    let accum=0;
+    winSlots.forEach(t=>{
+      accum+=posPct;
+      if(accum>=100){ map[t]='pos'; accum-=100; }
+      else { map[t]='online'; }
+    });
+  });
+  return map;
+}
+
+function getOnlineLockAheadMinutes(now){
+  const nowMin = now.getHours()*60+now.getMinutes();
+  for(const [ws,we,ahead] of ONLINE_LOCK_WINDOWS){
+    if(nowMin>=ws && nowMin<we) return ahead;
+  }
+  return 20;
+}
+// ══════════ پایان ماژول اسلات‌بندی ══════════
+
 async function checkOnlineInventory(items){
   try{
-    // موجودی رو تازه بارگذاری کن تا آخرین وضعیت رو داشته باشیم
     await loadInventoryLimits();
     const errors = [];
     items.forEach(it => {
@@ -505,11 +526,10 @@ const ITEM_DESCRIPTIONS = {
   'نودل تاکی سای':   'نودل - فیله مرغ ۵۰گرم - گرانول بادام‌زمینی - پنیر پارمسان جعفری - سس بادام زمینی',
 };
 
-// ══════════ state ══════════
 let menu         = [];
 let qtyMap       = {};
 let sauceMap     = {};
-let itemMaxMap   = {}; // { itemId: maxQty } — حداکثر مجاز بر اساس موجودی
+let itemMaxMap   = {};
 let deliveryType = 'pickup';
 let selectedFile = null;
 let discountPct  = 0;
@@ -519,11 +539,8 @@ let currentDraftId = null;
 let lastPhone    = '';
 let lastTrackCode = '';
 let takenSlots   = {};
-let isEditingDraft = false; // آیا در حالت ویرایش یک سفارش (draft) موجود هستیم
+let isEditingDraft = false;
 
-// ══════════ ابزارها ══════════
-
-// تبدیل تاریخ میلادی به جلالی (ساده)
 function toJalaliSimple(date){
   let gy=date.getFullYear(),gm=date.getMonth()+1,gd=date.getDate();
   let gdm=[31,28,31,30,31,30,31,31,30,31,30,31];
@@ -539,7 +556,6 @@ function toJalaliSimple(date){
   return String(jy).slice(-2)+String(jm).padStart(2,'0')+String(jd).padStart(2,'0');
 }
 
-// تولید کد منحصربه‌فرد اسلات: مثال ۱۴۰۴۰۳۱۵-۲۰۱۵
 function generateSlotCode(slotTime){
   const now = new Date();
   const jalali = toJalaliSimple(now);
@@ -562,7 +578,6 @@ function supaFetch(path,opts={}){
   });
 }
 
-// ══════════ صفحه‌بندی ══════════
 const SCREENS=['loader','landing-screen','order-screen',
                'payment-screen','track-screen','success-screen','empty-state'];
 function showScreen(id){
@@ -583,9 +598,7 @@ let _invPollTimer = null;
 
 function startInventoryPolling(){
   stopInventoryPolling();
-  // بلافاصله یک بار بخوان
   loadInventoryLimits().then(()=>renderMenu());
-  // بعد هر ۱۵ ثانیه
   _invPollTimer = setInterval(async()=>{
     await loadInventoryLimits();
     renderMenu();
@@ -606,7 +619,6 @@ function goToOrder(){
   startInventoryPolling();
 }
 
-// ورود به حالت ویرایش سفارش (draft) موجود از صفحه پرداخت
 function editOrder(){
   isEditingDraft = true;
   slotLockedForPayment = false;
@@ -624,27 +636,7 @@ function goToTrackAfterSuccess(){
   trackOrders();
 }
 
-// ══════════ تولید لیست اسلات‌ها ══════════
-function generateAllSlots(){
-  const slots=[];
-  const startSec = SLOT_START_H*3600 + SLOT_START_M*60;
-  const endSec   = SLOT_END_H*3600 + SLOT_END_M*60;
-  const seen = new Set();
-  for(let t=startSec; t<=endSec; t+=SLOT_INTERVAL_SECONDS){
-    const h=Math.floor(t/3600);
-    const m=Math.floor((t%3600)/60);
-    const label=String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');
-    if(!seen.has(label)){
-      seen.add(label);
-      slots.push(label);
-    }
-  }
-  return slots;
-}
-
-// ══════════ گرفتن اسلات‌های پر از Supabase ══════════
-// excludeId: اگر پاس داده شود، سفارش با این id از شمارش اسلات‌های پر حذف می‌شود
-// (برای زمانی که کاربر در حال ویرایش سفارش خودش است و اسلات فعلی‌اش نباید «پر» نمایش داده شود)
+// ══════════ گرفتن اسلات‌های پر — از هر دو منبع: سفارش‌های آنلاین و سفارش‌های صندوق ══════════
 async function fetchTakenSlots(excludeId){
   const now = new Date().toISOString();
   const validSlots = new Set(generateAllSlots());
@@ -654,29 +646,46 @@ async function fetchTakenSlots(excludeId){
   todayStart.setHours(0,0,0,0);
   const todayISO = todayStart.toISOString();
 
+  // ۱) سفارش‌های آنلاین امروز
   const res = await supaFetch(
-    '/rest/v1/online_orders?select=id,delivery_time,status,reserved_until&created_at=gte.'+encodeURIComponent(todayISO),
+    '/rest/v1/online_orders?select=id,delivery_time,status,reserved_until,order_id&created_at=gte.'+encodeURIComponent(todayISO),
     {headers:{'Accept':'application/json'}}
   );
   if(!res.ok) throw new Error('server '+res.status);
   const rows = await res.json();
-
   rows.forEach(r=>{
     if(excludeId && r.id===excludeId) return;
     if(!r.delivery_time) return;
     const t = String(r.delivery_time).substring(0,5);
     if(!validSlots.has(t)) return;
     const st = r.status || '';
-    if(st === 'rejected') return;
+    if(st === 'rejected' || st === 'cancelled') return;
     if(st === 'draft'){
       if(r.reserved_until && r.reserved_until < now) return;
     }
+    // اگر این سفارش آنلاین به یک ردیف صندوق لینک شده (order_id) از شمارش صندوق زیر صرف‌نظر می‌کنیم تا دوبار شمرده نشود
     taken[t] = (taken[t]||0) + 1;
   });
+
+  // ۲) سفارش‌های ثبت‌شده مستقیم در صندوق (حضوری) — روی روز کاری جاری
+  try{
+    const workDay = getWorkingDay();
+    const res2 = await supaFetch('/rest/v1/orders?select=delivery_time,status,is_online&date=eq.'+encodeURIComponent(workDay), {headers:{'Accept':'application/json'}});
+    if(res2.ok){
+      const posRows = await res2.json();
+      posRows.forEach(r=>{
+        if(r.is_online) return; // این‌ها همون سفارش آنلاینی هستن که صندوق تاییدش کرده، بالا شمرده شدن
+        if(!r.delivery_time) return;
+        const t = String(r.delivery_time).substring(0,5);
+        if(!validSlots.has(t)) return;
+        taken[t] = (taken[t]||0) + 1;
+      });
+    }
+  } catch(e){ /* اگه صندوق در دسترس نبود، حداقل اسلات‌های آنلاین درست کار کنن */ }
+
   return taken;
 }
 
-// ══════════ بارگذاری اسلات‌های پر از Supabase ══════════
 let _slotAutoRefreshTimer = null;
 
 async function loadSlots(showRefreshAnim){
@@ -704,35 +713,34 @@ async function loadSlots(showRefreshAnim){
   }
 }
 
-// ══════════ رندر اسلات‌ها ══════════
 let slotLockedForPayment = false;
 
 function renderSlots(){
   const container=document.getElementById('slots-container');
   const allSlots=generateAllSlots();
+  const channelMap = getSlotChannelMap();
   const now=new Date();
   const nowMin=now.getHours()*60+now.getMinutes();
+  const lockAhead = getOnlineLockAheadMinutes(now);
   let html='<div class="slots-grid">';
   allSlots.forEach(slotTime=>{
     const [sh,sm]=slotTime.split(':').map(Number);
     const slotMin=sh*60+sm;
-    const isPast=slotMin<nowMin+SLOT_MIN_AHEAD;
+    const isPast = slotMin < nowMin + lockAhead; // هم گذشته و هم داخل پنجره قفل آنلاین
+    const isPosOnlySlot = channelMap[slotTime]==='pos'; // سهمیه صندوق — آنلاین حق نداره
     const takenCount=takenSlots[slotTime]||0;
     const isTaken=takenCount>=SLOT_CAPACITY;
     const isSelected=selectedTime===slotTime;
-    const isLockedSelected = slotLockedForPayment && isSelected;
     let cls='slot-btn', statusTxt='', disabled='';
     if(isSelected){ cls+=' slot-selected'; statusTxt='انتخاب شما ✓'; }
-    else if(isPast){ cls+=' slot-past'; statusTxt='گذشته'; disabled='disabled'; }
     else if(isTaken){ cls+=' slot-taken'; statusTxt='🔴 پر شده'; disabled='disabled'; }
+    else if(isPast){ cls+=' slot-past'; statusTxt='گذشته/قفل'; disabled='disabled'; }
+    else if(isPosOnlySlot){ cls+=' slot-locked'; statusTxt='مخصوص صندوق'; disabled='disabled'; }
     else{ cls+=' slot-free'; statusTxt='خالی'; }
     const displayTime=tp(String(sh).padStart(2,'0'))+':'+tp(String(sm).padStart(2,'0'));
-    const slotCode=generateSlotCode(slotTime);
-    const slotCodeDisplay=tp(slotCode);
-    html+=`<button type="button" class="${cls}" ${disabled} onclick="selectSlot('${slotTime}')" ${isPast||isTaken?'':'style="cursor:pointer;"'}>
+    html+=`<button type="button" class="${cls}" ${disabled} onclick="selectSlot('${slotTime}')" ${disabled?'':'style="cursor:pointer;"'}>
       <div class="slot-time">${displayTime}</div>
       <div class="slot-status">${statusTxt}</div>
-      ${!isPast&&!isTaken?`<div style="font-size:8px;color:rgba(255,255,255,.35);margin-top:1px;letter-spacing:.5px;">${slotCodeDisplay}</div>`:''}
     </button>`;
   });
   html+='</div>';
@@ -740,11 +748,14 @@ function renderSlots(){
   if(selectedTime && !slotLockedForPayment){
     const [sh,sm]=selectedTime.split(':').map(Number);
     const slotMin=sh*60+sm;
-    if(slotMin<nowMin+SLOT_MIN_AHEAD){
+    if(slotMin<nowMin+lockAhead){
       selectedTime=null;
       document.getElementById('time-err').textContent='⚠️ اسلات انتخابی شما گذشت. لطفاً دوباره انتخاب کن.';
     } else if((takenSlots[selectedTime]||0)>=SLOT_CAPACITY){
       document.getElementById('time-err').textContent='⚠️ اسلات انتخابی شما توسط نفر دیگری رزرو شد. لطفاً زمان دیگری انتخاب کن.';
+      selectedTime=null;
+    } else if(channelMap[selectedTime]==='pos'){
+      document.getElementById('time-err').textContent='⚠️ این اسلات مخصوص صندوق شد. لطفاً زمان دیگری انتخاب کن.';
       selectedTime=null;
     }
   }
@@ -752,12 +763,18 @@ function renderSlots(){
 
 async function selectSlot(slotTime){
   if(slotLockedForPayment) return;
+  const channelMap = getSlotChannelMap();
   const [sh,sm]=slotTime.split(':').map(Number);
   const now=new Date();
   const nowMin=now.getHours()*60+now.getMinutes();
   const slotMin=sh*60+sm;
-  if(slotMin<nowMin+SLOT_MIN_AHEAD){
-    document.getElementById('time-err').textContent='⛔ این اسلات گذشته و قابل انتخاب نیست.';
+  const lockAhead = getOnlineLockAheadMinutes(now);
+  if(slotMin<nowMin+lockAhead){
+    document.getElementById('time-err').textContent='⛔ این اسلات گذشته یا داخل پنجره قفل است.';
+    return;
+  }
+  if(channelMap[slotTime]==='pos'){
+    document.getElementById('time-err').textContent='⛔ این اسلات مخصوص صندوق است.';
     return;
   }
   const refreshBtn=document.getElementById('slot-refresh-btn');
@@ -769,7 +786,7 @@ async function selectSlot(slotTime){
     if(refreshBtn){refreshBtn.disabled=false;}
   }
   if((takenSlots[slotTime]||0)>=SLOT_CAPACITY){
-    document.getElementById('time-err').textContent='⛔ این اسلات همین الان توسط مشتری دیگری رزرو شد! لطفاً زمان دیگری انتخاب کن.';
+    document.getElementById('time-err').textContent='⛔ این اسلات همین الان پر شد! لطفاً زمان دیگری انتخاب کن.';
     selectedTime=null;
     renderSlots();
     return;
@@ -779,7 +796,6 @@ async function selectSlot(slotTime){
   renderSlots();
 }
 
-// ══════════ بارگذاری اصلی ══════════
 async function loadMenu(){
   showScreen('empty-state');
   document.getElementById('pay-bank').textContent=PAYMENT_INFO.bank;
@@ -1075,11 +1091,13 @@ async function saveDraft(){
   if(!selectedTime){errEl.textContent='لطفاً یک اسلات زمانی خالی انتخاب کنید';return;}
 
   const isEdit = isEditingDraft && !!currentDraftId;
+  const channelMap = getSlotChannelMap();
 
   const [chk_h,chk_m]=selectedTime.split(':').map(Number);
   const chkNow=new Date(); const chkNowMin=chkNow.getHours()*60+chkNow.getMinutes();
-  if(chk_h*60+chk_m<chkNowMin+SLOT_MIN_AHEAD){
-    errEl.textContent='⛔ این اسلات گذشته است. لطفاً اسلات دیگری انتخاب کن.';
+  const lockAhead = getOnlineLockAheadMinutes(chkNow);
+  if(chk_h*60+chk_m<chkNowMin+lockAhead || channelMap[selectedTime]==='pos'){
+    errEl.textContent='⛔ این اسلات دیگر برای آنلاین در دسترس نیست. لطفاً اسلات دیگری انتخاب کن.';
     selectedTime=null; renderSlots(); return;
   }
   try{ takenSlots=await fetchTakenSlots(isEdit?currentDraftId:null); } catch(e){}
@@ -1098,7 +1116,6 @@ async function saveDraft(){
   try{
     const {subtotal,discountAmt,total}=updateTotal();
     const reservedUntil = new Date(Date.now() + 5*60*1000).toISOString();
-    // در حالت ویرایش، کد پیگیری قبلی (slot_code) حفظ می‌شود و تغییر نمی‌کند
     const slotCode = isEdit ? (lastTrackCode || generateSlotCode(selectedTime)) : generateSlotCode(selectedTime);
     const body={
       customer_name:name||null,customer_phone:phone,items,total,subtotal,
@@ -1457,4 +1474,3 @@ loadMenu();
 </script>
 </body>
 </html>
-
