@@ -507,6 +507,22 @@ async function checkOnlineInventory(items){
         }
       }
     });
+    // بررسی موجودی مرغ/گوشت اضافه (جدا از سقف خود آیتم)
+    const extraNeed = { chicken:0, beef:0 };
+    items.forEach(it => {
+      const eq = it.extraQty || (it.extra ? 1 : 0);
+      if(it.extra==='chicken') extraNeed.chicken += it.qty*eq;
+      if(it.extra==='beef') extraNeed.beef += it.qty*eq;
+    });
+    ['chicken','beef'].forEach(k => {
+      if(!extraNeed[k]) return;
+      const left = remainingInv[k];
+      if(left === null || left === undefined) return; // بدون محدودیت
+      if(extraNeed[k] > left){
+        const label = k==='chicken' ? 'مرغ اضافه' : 'گوشت اضافه';
+        errors.push(`${label}: موجودی کافی نیست (باقی‌مانده ${tp(Math.max(0,Math.round(left*10)/10))})`);
+      }
+    });
     return errors.length ? errors : null;
   } catch(e){
     return ['خطا در بررسی موجودی. لطفاً دوباره تلاش کنید.'];
@@ -526,10 +542,48 @@ const ITEM_DESCRIPTIONS = {
   'نودل تاکی سای':   'نودل - فیله مرغ ۵۰گرم - گرانول بادام‌زمینی - پنیر پارمسان جعفری - سس بادام زمینی',
 };
 
+// آیتم‌هایی که امکان افزودن مرغ/گوشت اضافه دارند و نوع افزودنی مرتبط
+const EXTRA_ADDON_ITEMS = {
+  'نودل مرغ': 'chicken',
+  'نودل مرغ پنیری': 'chicken',
+  'نودل گوشت': 'beef',
+  'نودل گوشت پنیری': 'beef',
+};
+const EXTRA_ADDON_PCT = { chicken: 0.23, beef: 0.29 }; // درصد نسبت به قیمت ظرف ساده
+const EXTRA_ADDON_BASE_NAME = { chicken: 'نودل مرغ', beef: 'نودل گوشت' };
+const EXTRA_ADDON_LABEL = { chicken: '🍗 مرغ اضافه', beef: '🥩 گوشت اضافه' };
+
+// قیمت افزودنی: درصدی از قیمت ظرف ساده (نودل مرغ / نودل گوشت)، رند شده به نزدیک‌ترین ۵۰۰ تومان
+function getExtraAddonPrice(kind){
+  const baseItem = menu.find(m => m.name === EXTRA_ADDON_BASE_NAME[kind]);
+  if(!baseItem) return 0;
+  const raw = Number(baseItem.price) * EXTRA_ADDON_PCT[kind];
+  return Math.round(raw / 500) * 500;
+}
+
+// حداکثر مجاز برای تعداد اضافه (بر اساس موجودی خام باقی‌مانده، سقف نرم ۱۰ عدد)
+function getMaxExtraQty(kind){
+  const left = remainingInv[kind];
+  if(left === null || left === undefined) return 10;
+  return Math.max(0, Math.min(10, Math.floor(left)));
+}
+
+function changeExtraQty(itemId, delta){
+  const kind = EXTRA_ADDON_ITEMS[menu.find(m=>m.id===itemId)?.name];
+  if(!kind) return;
+  const maxQty = getMaxExtraQty(kind);
+  const cur = extraMap[itemId] || 0;
+  const next = Math.max(0, Math.min(maxQty, cur + delta));
+  if(next > 0) extraMap[itemId] = next; else delete extraMap[itemId];
+  renderMenu();
+}
+
 let menu         = [];
 let qtyMap       = {};
 let sauceMap     = {};
 let itemMaxMap   = {};
+let remainingInv = {}; // { invKey: remainingAmount|null } — موجودی خام باقی‌مانده (برای بررسی مرغ/گوشت اضافه)
+let extraMap     = {}; // { itemId: تعداد مرغ/گوشت اضافه (عدد) } — کلید حذف می‌شود اگر صفر باشد
 let deliveryType = 'pickup';
 let selectedFile = null;
 let discountPct  = 0;
@@ -892,6 +946,7 @@ function getWorkingDay(){
 
 async function loadInventoryLimits(){
   itemMaxMap = {};
+  remainingInv = {};
   try{
     const today = getWorkingDay();
 
@@ -915,8 +970,10 @@ async function loadInventoryLimits(){
           const menuItem = menu.find(m => m.id === it.itemId);
           if(!menuItem) return;
           const cost = ITEM_COST[menuItem.name];
-          if(!cost) return;
-          INV_KEYS.forEach(k => { if(cost[k]) consumed[k] += cost[k] * (it.qty||1); });
+          if(cost) INV_KEYS.forEach(k => { if(cost[k]) consumed[k] += cost[k] * (it.qty||1); });
+          const _eq = it.extraQty || (it.extra ? 1 : 0);
+          if(it.extra==='chicken') consumed.chicken += (it.qty||1)*_eq;
+          if(it.extra==='beef') consumed.beef += (it.qty||1)*_eq;
         });
       });
     }
@@ -928,6 +985,7 @@ async function loadInventoryLimits(){
       remaining[k] = initial === null ? null : Math.max(0, initial - consumed[k]);
     });
     console.log('[Inv] remaining:', JSON.stringify(remaining));
+    remainingInv = remaining;
 
     menu.forEach(m => {
       const cost = ITEM_COST[m.name];
@@ -971,6 +1029,28 @@ function renderMenu(){
       ${sauces.length>0?`<span style="font-size:10px;color:var(--pink-light);margin-top:2px;">✓ ${tp(sauces.length)} سس انتخاب شده</span>`:'<span style="font-size:10px;color:var(--text3);margin-top:2px;">می‌توانید چند سس انتخاب کنید</span>'}
     </div>` : '';
 
+    // مرغ/گوشت اضافه — فقط برای ۴ آیتم واجد شرایط (با تعداد قابل انتخاب)
+    const addonKind = EXTRA_ADDON_ITEMS[m.name];
+    let addonHtml = '';
+    if(addonKind && q>0 && !outOfStock){
+      const addonPrice = getExtraAddonPrice(addonKind);
+      const addonMax = getMaxExtraQty(addonKind);
+      const addonQty = extraMap[m.id] || 0;
+      const addonOut = addonMax<=0 && addonQty<=0;
+      addonHtml = `<div class="sauce-row visible" style="border-top:1px dashed rgba(245,158,11,.35);padding-top:8px;">
+        <div class="mi-row" style="align-items:center;">
+          <span class="sauce-label-txt">${EXTRA_ADDON_LABEL[addonKind]} <span style="color:var(--text3);">(هر عدد ${fmt(addonPrice)} تومان)</span></span>
+          ${addonOut ? `<span style="font-size:10px;color:var(--red);">⛔ تمام شد</span>` : `
+          <div class="qty-ctrl">
+            <button class="qty-btn" onclick="changeExtraQty('${m.id}',-1)" ${addonQty<=0?'disabled style="opacity:.35;"':''}>−</button>
+            <span class="qty-val">${tp(addonQty)}</span>
+            <button class="qty-btn" onclick="changeExtraQty('${m.id}',1)" ${addonQty>=addonMax?'disabled style="opacity:.35;cursor:not-allowed;"':''}>+</button>
+          </div>`}
+        </div>
+        ${addonQty>0?`<span style="font-size:10px;color:var(--pink-light);margin-top:2px;">✓ ${tp(addonQty)} عدد اضافه — ${fmt(addonQty*addonPrice)} تومان</span>`:''}
+      </div>`;
+    }
+
     return `<div class="menu-item" style="${outOfStock?'opacity:.5;':''}">
       <div class="mi-row">
         <div>
@@ -983,7 +1063,7 @@ function renderMenu(){
           <span class="qty-val">${tp(q)}</span>
           <button class="qty-btn" onclick="changeQty('${m.id}',1)" ${outOfStock||atMax?'disabled style="opacity:.35;cursor:not-allowed;"':''}>+</button>
         </div>
-      </div>${sauceHtml}
+      </div>${sauceHtml}${addonHtml}
     </div>`;
   }).join('');
   updateTotal();
@@ -992,7 +1072,7 @@ function changeQty(id,delta){
   const maxQty = (itemMaxMap[id] !== undefined) ? itemMaxMap[id] : 99;
   const newQty = Math.max(0, Math.min(maxQty, (qtyMap[id]||0)+delta));
   qtyMap[id] = newQty;
-  if(!qtyMap[id]) delete sauceMap[id];
+  if(!qtyMap[id]){ delete sauceMap[id]; delete extraMap[id]; }
   if(['water','soda','lemonade'].includes(id)) delete sauceMap[id];
   renderMenu();
 }
@@ -1004,7 +1084,15 @@ function toggleSauce(itemId,sauce){
 }
 function updateTotal(){
   let subtotal=0;
-  menu.forEach(m=>{subtotal+=(qtyMap[m.id]||0)*Number(m.price);});
+  menu.forEach(m=>{
+    const q=qtyMap[m.id]||0;
+    subtotal+=q*Number(m.price);
+    const addonKind = EXTRA_ADDON_ITEMS[m.name];
+    const addonQty = extraMap[m.id]||0;
+    if(addonKind && addonQty>0 && q>0){
+      subtotal += q*addonQty*getExtraAddonPrice(addonKind);
+    }
+  });
   const discountAmt=Math.round(subtotal*discountPct/100);
   const total=subtotal-discountAmt;
   const subRow=document.getElementById('subtotal-row');
@@ -1083,9 +1171,12 @@ async function saveDraft(){
   const note=(document.getElementById('order-note').value||'').trim();
   const address=(document.getElementById('cust-address').value||'').trim();
   if(!phone||phone.length<10){errEl.textContent='لطفاً شماره موبایل معتبر وارد کنید';return;}
-  const items=menu.filter(m=>(qtyMap[m.id]||0)>0).map(m=>({
-    itemId:m.id,name:m.name,qty:qtyMap[m.id],unitPrice:Number(m.price),sauces:sauceMap[m.id]||[]
-  }));
+  const items=menu.filter(m=>(qtyMap[m.id]||0)>0).map(m=>{
+    const addonKind = EXTRA_ADDON_ITEMS[m.name];
+    const addonQty = addonKind ? (extraMap[m.id]||0) : 0;
+    const unitPrice = Number(m.price) + (addonQty>0 ? addonQty*getExtraAddonPrice(addonKind) : 0);
+    return { itemId:m.id, name:m.name, qty:qtyMap[m.id], unitPrice, sauces:sauceMap[m.id]||[], extra: addonQty>0?addonKind:null, extraQty: addonQty };
+  });
   if(!items.length){errEl.textContent='حداقل یک غذا از منو انتخاب کنید';return;}
   if(deliveryType==='delivery'&&!address){errEl.textContent='آدرس را برای تحویل درب منزل وارد کنید';return;}
   if(!selectedTime){errEl.textContent='لطفاً یک اسلات زمانی خالی انتخاب کنید';return;}
@@ -1161,7 +1252,9 @@ function showPaymentScreen(order,items,meta){
   const deliveryLabel=meta.deliveryType==='delivery'?'🛵 تحویل درب منزل':'🏪 تحویل حضوری';
   const itemsHtml=items.map(i=>{
     const sc=i.sauces&&i.sauces.length?' <span style="font-size:11px;color:var(--text3);">('+i.sauces.join('، ')+')</span>':'';
-    return `<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:13px;"><span>× ${tp(i.qty)} ${i.name}${sc}</span><span style="color:var(--text3);">${fmt(i.qty*i.unitPrice)} تومان</span></div>`;
+    const _exQty = i.extraQty || (i.extra ? 1 : 0);
+    const ex=i.extra==='chicken'?' <span style="font-size:11px;color:var(--pink-light);">(🍗 '+tp(_exQty)+'× مرغ اضافه)</span>':(i.extra==='beef'?' <span style="font-size:11px;color:var(--pink-light);">(🥩 '+tp(_exQty)+'× گوشت اضافه)</span>':'');
+    return `<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:13px;"><span>× ${tp(i.qty)} ${i.name}${sc}${ex}</span><span style="color:var(--text3);">${fmt(i.qty*i.unitPrice)} تومان</span></div>`;
   }).join('');
   let priceHtml=`<div style="border-top:1px solid var(--border);margin-top:8px;padding-top:8px;">`;
   if(meta.discountPct>0){
@@ -1399,7 +1492,9 @@ function renderOrderCard(o){
     </div>`).join('');
   const itemsHtml=items.map(i=>{
     const sc=i.sauces&&i.sauces.length?' <span style="font-size:11px;color:var(--text3);">('+i.sauces.join('، ')+')</span>':'';
-    return `<div style="font-size:13px;line-height:2;">× ${tp(i.qty)} ${i.name}${sc}</div>`;
+    const _exQty = i.extraQty || (i.extra ? 1 : 0);
+    const ex=i.extra==='chicken'?' <span style="font-size:11px;color:var(--pink-light);">(🍗 '+tp(_exQty)+'× مرغ اضافه)</span>':(i.extra==='beef'?' <span style="font-size:11px;color:var(--pink-light);">(🥩 '+tp(_exQty)+'× گوشت اضافه)</span>':'');
+    return `<div style="font-size:13px;line-height:2;">× ${tp(i.qty)} ${i.name}${sc}${ex}</div>`;
   }).join('');
   const discountHtml=o.discount_pct?`<div style="font-size:12px;color:var(--green);margin-top:4px;">🎟️ تخفیف ${tp(o.discount_pct)}٪ — ${fmt(o.discount_amt)} تومان کسر شد</div>`:'';
   const continueBtn=(o.status==='draft')
