@@ -49,8 +49,10 @@ body{font-family:Tahoma,sans-serif;background:var(--bg);color:var(--text);min-he
 .open-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:blink 1.4s infinite;}
 @keyframes blink{0%,100%{opacity:1;}50%{opacity:.3;}}
 @keyframes slideDown{from{opacity:0;transform:translateY(-16px);}to{opacity:1;transform:translateY(0);}}
-.menu-item{border-bottom:1px solid var(--border);padding:12px 0;}
-.menu-item:last-child{border-bottom:none;}
+.menu-item{border:1px solid var(--border);padding:12px 10px;margin:0 0 10px;border-radius:10px;}
+.menu-item:nth-child(odd){background:rgba(255,255,255,.025);}
+.menu-item:nth-child(even){background:rgba(236,72,153,.045);}
+.menu-item:last-child{margin-bottom:0;}
 .mi-name{font-size:14px;font-weight:600;}
 .mi-price{font-size:12px;color:var(--text3);margin-top:2px;}
 .mi-row{display:flex;align-items:center;justify-content:space-between;}
@@ -59,6 +61,9 @@ body{font-family:Tahoma,sans-serif;background:var(--bg);color:var(--text);min-he
 .qty-val{min-width:20px;text-align:center;font-size:14px;font-weight:600;}
 .sauce-row{margin-top:8px;padding-top:8px;display:none;flex-direction:column;gap:6px;}
 .sauce-row.visible{display:flex;}
+.item-option-label{font-size:13px;font-weight:700;}
+.item-option-label.label-sauce{color:var(--pink-light);}
+.item-option-label.label-addon{color:#f59e0b;}
 .sauce-label-txt{font-size:11px;color:var(--text3);}
 .sauce-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;}
 .sauce-chip{background:var(--bg4);border:1px solid var(--border);border-radius:20px;padding:4px 12px;font-size:11px;color:var(--text3);cursor:pointer;}
@@ -645,6 +650,7 @@ function showScreen(id){
   const el=document.getElementById(id);
   if(!el) return;
   el.style.display=(id==='landing-screen'||id==='success-screen')?'flex':'block';
+  window.scrollTo(0,0);
 }
 function showLanding(){ isEditingDraft=false; stopTrackPolling(); stopInventoryPolling(); slotLockedForPayment=false; showScreen('landing-screen'); }
 function showTrack(){
@@ -1027,7 +1033,7 @@ function renderMenu(){
     }
 
     const sauceHtml = q>0 && !isDrink && !outOfStock ? `<div class="sauce-row visible">
-      <span class="sauce-label-txt">🥫 سس برای «${m.name}» (تکی یا ترکیبی):</span>
+      <span class="item-option-label label-sauce">🥫 سس برای «${m.name}» (تکی یا ترکیبی):</span>
       <div class="sauce-chips">${SAUCES.map(s=>`<span class="sauce-chip ${sauces.includes(s)?'active':''}" onclick="toggleSauce('${m.id}','${s}')">${s}</span>`).join('')}</div>
       ${sauces.length>0?`<span style="font-size:10px;color:var(--pink-light);margin-top:2px;">✓ ${tp(sauces.length)} سس انتخاب شده</span>`:'<span style="font-size:10px;color:var(--text3);margin-top:2px;">می‌توانید چند سس انتخاب کنید</span>'}
     </div>` : '';
@@ -1042,7 +1048,7 @@ function renderMenu(){
       const addonOut = addonMax<=0 && addonQty<=0;
       addonHtml = `<div class="sauce-row visible" style="border-top:1px dashed rgba(245,158,11,.35);padding-top:8px;">
         <div class="mi-row" style="align-items:center;">
-          <span class="sauce-label-txt">${EXTRA_ADDON_LABEL[addonKind]} <span style="color:var(--text3);">(هر عدد ${fmt(addonPrice)} تومان)</span></span>
+          <span class="item-option-label label-addon">${EXTRA_ADDON_LABEL[addonKind]} <span style="color:var(--text3);font-weight:600;font-size:12px;">(هر عدد ${fmt(addonPrice)} تومان)</span></span>
           ${addonOut ? `<span style="font-size:10px;color:var(--red);">⛔ تمام شد</span>` : `
           <div class="qty-ctrl">
             <button class="qty-btn" onclick="changeExtraQty('${m.id}',-1)" ${addonQty<=0?'disabled style="opacity:.35;"':''}>−</button>
