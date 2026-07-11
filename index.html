@@ -438,9 +438,9 @@ const SLOT_CAPACITY_WINDOWS = [
 const SLOT_QUOTA_WINDOWS = [
   [20*60+0,  20*60+30, 80],
   [20*60+30, 21*60+0,  50],
-  [21*60+0,  22*60+30, 20],
-  [22*60+30, 23*60+0,  50],
-  [23*60+0,  23*60+40, 80]
+  [21*60+0,  22*60+30, 35],
+  [22*60+30, 23*60+20, 50],
+  [23*60+20, 23*60+40, 100]
 ];
 
 // بازه‌های قفل آنلاین: [شروع, پایان, حداقل فاصله لازم تا اسلات (دقیقه)]
@@ -885,15 +885,15 @@ async function loadMenu(){
 }
 
 const ITEM_COST = {
-  'نودل مرغ':         { noodle:1.5, chicken:1, teriyaki_sauce:1, bowl:1 },
-  'نودل گوشت':        { noodle:1.5, beef:1,    teriyaki_sauce:1, bowl:1 },
-  'نودل پنیری':       { noodle:1.5, cheese:1,                    bowl:1 },
-  'نودل خامه':        { noodle:1.5, cream_sauce:1,               bowl:1 },
-  'نودل خامه‌ای':     { noodle:1.5, cream_sauce:1,               bowl:1 },
-  'نودل مرغ پنیری':   { noodle:1.5, chicken:1, cheese:1, teriyaki_sauce:1, bowl:1 },
-  'نودل گوشت پنیری':  { noodle:1.5, beef:1,    cheese:1, teriyaki_sauce:1, bowl:1 },
-  'نودل تاکی سای':    { noodle:1.5, taki_sai:1, bowl:1 },
-  'نودل سبزیجات':     { noodle:1.5, bowl:1 },
+  'نودل مرغ':         { noodle:1.7, chicken:1, teriyaki_sauce:1, bowl:1 },
+  'نودل گوشت':        { noodle:1.7, beef:1,    teriyaki_sauce:1, bowl:1 },
+  'نودل پنیری':       { noodle:1.7, cheese:1,                    bowl:1 },
+  'نودل خامه':        { noodle:1.7, cream_sauce:1,               bowl:1 },
+  'نودل خامه‌ای':     { noodle:1.7, cream_sauce:1,               bowl:1 },
+  'نودل مرغ پنیری':   { noodle:1.7, chicken:1, cheese:1, teriyaki_sauce:1, bowl:1 },
+  'نودل گوشت پنیری':  { noodle:1.7, beef:1,    cheese:1, teriyaki_sauce:1, bowl:1 },
+  'نودل تاکی سای':    { noodle:1.7, taki_sai:1, bowl:1 },
+  'نودل سبزیجات':     { noodle:1.7, bowl:1 },
   'پاستا مرغ':        { pasta:1, chicken:1, cream_sauce:1, bowl:1 },
   'پاستا گوشت':       { pasta:1, beef:1,    cream_sauce:1, bowl:1 },
   'آب':               { water:1 },
