@@ -515,19 +515,23 @@ async function checkOnlineInventory(items){
         }
       }
     });
-    // بررسی موجودی مرغ/گوشت اضافه (جدا از سقف خود آیتم)
-    const extraNeed = { chicken:0, beef:0 };
+    // بررسی موجودی مرغ/گوشت اضافه و سس خامه‌ای صورتی (جدا از سقف خود آیتم)
+    const extraNeed = { chicken:0, beef:0, cream_sauce:0 };
     items.forEach(it => {
       const eq = it.extraQty || (it.extra ? 1 : 0);
       if(it.extra==='chicken') extraNeed.chicken += it.qty*eq;
       if(it.extra==='beef') extraNeed.beef += it.qty*eq;
+      if(Array.isArray(it.sauces) && it.sauces.includes('سس خامه‌ای صورتی')){
+        const baseCost = ITEM_COST[it.name];
+        if(!(baseCost && baseCost.cream_sauce)) extraNeed.cream_sauce += it.qty;
+      }
     });
-    ['chicken','beef'].forEach(k => {
+    ['chicken','beef','cream_sauce'].forEach(k => {
       if(!extraNeed[k]) return;
       const left = remainingInv[k];
       if(left === null || left === undefined) return; // بدون محدودیت
       if(extraNeed[k] > left){
-        const label = k==='chicken' ? 'مرغ اضافه' : 'گوشت اضافه';
+        const label = k==='chicken' ? 'مرغ اضافه' : k==='beef' ? 'گوشت اضافه' : 'سس خامه‌ای';
         errors.push(`${label}: موجودی کافی نیست (باقی‌مانده ${tp(Math.max(0,Math.round(left*10)/10))})`);
       }
     });
@@ -577,7 +581,8 @@ function getMaxExtraQty(kind){
 }
 
 function changeExtraQty(itemId, delta){
-  const kind = EXTRA_ADDON_ITEMS[menu.find(m=>m.id===itemId)?.name];
+  const foundItem = menu.find(m=>m.id===itemId);
+  const kind = EXTRA_ADDON_ITEMS[foundItem ? foundItem.name : undefined];
   if(!kind) return;
   const maxQty = getMaxExtraQty(kind);
   const cur = extraMap[itemId] || 0;
@@ -901,7 +906,7 @@ const ITEM_COST = {
   'نودل خامه‌ای':     { noodle:1.7, cream_sauce:1,               bowl:1 },
   'نودل مرغ پنیری':   { noodle:1.7, chicken:1, cheese:1, teriyaki_sauce:1, bowl:1 },
   'نودل گوشت پنیری':  { noodle:1.7, beef:1,    cheese:1, teriyaki_sauce:1, bowl:1 },
-  'نودل تاکی سای':    { noodle:1.7, taki_sai:1, bowl:1 },
+  'نودل تاکی سای':    { noodle:1.7, chicken:1, taki_sai:1, bowl:1 },
   'نودل سبزیجات':     { noodle:1.7, bowl:1 },
   'پاستا مرغ':        { pasta:1, chicken:1, cream_sauce:1, bowl:1 },
   'پاستا گوشت':       { pasta:1, beef:1,    cream_sauce:1, bowl:1 },
@@ -983,6 +988,11 @@ async function loadInventoryLimits(){
           const _eq = it.extraQty || (it.extra ? 1 : 0);
           if(it.extra==='chicken') consumed.chicken += (it.qty||1)*_eq;
           if(it.extra==='beef') consumed.beef += (it.qty||1)*_eq;
+          // سس خامه‌ای اضافه (ثبت‌شده از صندوق) یا انتخاب «سس خامه‌ای صورتی» (سفارش آنلاین) — هر دو از موجودی خامه کم می‌شوند
+          if(it.creamSauceQty>0) consumed.cream_sauce += it.creamSauceQty;
+          if(Array.isArray(it.sauces) && it.sauces.includes('سس خامه‌ای صورتی') && !(cost && cost.cream_sauce)){
+            consumed.cream_sauce += (it.qty||1);
+          }
         });
       });
     }
@@ -1246,7 +1256,7 @@ async function saveDraft(){
     const trackCode = slotCode;
     const trackCodeDisplay = tp(trackCode);
     lastTrackCode = trackCode;
-    currentDraftId=saved?.id; lastPhone=phone;
+    currentDraftId = saved ? saved.id : undefined; lastPhone=phone;
     if(selectedTime){ takenSlots[selectedTime]=(takenSlots[selectedTime]||0)+1; }
     isEditingDraft=false;
     showPaymentScreen(saved,items,{subtotal,discountAmt,total,discountCode,discountPct,time:selectedTime,deliveryType,address,name,phone,trackCode,trackCodeDisplay});
@@ -1372,8 +1382,8 @@ async function finalizeOrder(){
     if(!res.ok) throw new Error('server '+(await res.text().catch(()=>'')));
     const data=await res.json();
     const saved=Array.isArray(data)?data[0]:data;
-    const trackCode=saved?.tracking_code||lastTrackCode||'';
-    document.getElementById('success-order-num').textContent=saved?.order_number?tp(String(saved.order_number)):'—';
+    const trackCode=(saved && saved.tracking_code)||lastTrackCode||'';
+    document.getElementById('success-order-num').textContent=(saved && saved.order_number)?tp(String(saved.order_number)):'—';
     document.getElementById('success-tracking-code').textContent=trackCode?tp(trackCode):'—';
     document.getElementById('success-order-info').textContent='📱 '+lastPhone;
     showScreen('success-screen');
