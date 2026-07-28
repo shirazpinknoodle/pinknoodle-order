@@ -179,7 +179,7 @@ body{font-family:'Vazirmatn',Tahoma,sans-serif;background:
   <div class="header-links">
     <a href="tel:09015155863">📞 ۰۹۰۱۵۱۵۵۸۶۳</a>
     <a href="https://instagram.com/shiraz.pink.noodle" target="_blank">📸 shiraz.pink.noodle</a>
-    <a referrerpolicy='origin' target='_blank' href='https://trustseal.enamad.ir/?id=7067510&Code=vdzO8TxtZ4dopITHoYrZ10UWhgxGQSxj' style="display:inline-flex;align-items:center;"><img referrerpolicy='origin' src='https://trustseal.enamad.ir/logo.aspx?id=7067510&Code=vdzO8TxtZ4dopITHoYrZ10UWhgxGQSxj' alt='' style='cursor:pointer;height:28px;width:auto;' code='vdzO8TxtZ4dopITHoYrZ10UWhgxGQSxj'></a>
+    <a referrerpolicy='origin' target='_blank' href='https://trustseal.enamad.ir/?id=7067510&Code=vdzO8TxtZ4dopITHoYrZ10UWhgxGQSxj' style="display:inline-flex;align-items:center;"><img referrerpolicy='origin' src='https://trustseal.enamad.ir/logo.aspx?id=7067510&Code=vdzO8TxtZ4dopITHoYrZ10UWhgxGQSxj' alt='' style='cursor:pointer;height:56px;width:auto;' code='vdzO8TxtZ4dopITHoYrZ10UWhgxGQSxj'></a>
   </div>
 </div>
 
@@ -634,7 +634,8 @@ let takenSlots   = {};
 let isEditingDraft = false;
 let customerCreditBalance = 0; // اعتبار فعلی مشتری (بر اساس شماره موبایل واردشده)
 let creditApplied = 0; // مقداری از اعتبار که توی همین سفارش استفاده می‌شه
-let currentOrderTotal = 0; // مبلغ نهایی همین سفارش (برای محاسبه ۵٪ اعتبار جدید موقع تایید پرداخت)
+let currentOrderTotal = 0; // مبلغ نهایی همین سفارش (بعد از تخفیف و اعتبار — برای نمایش)
+let currentOrderTotalBeforeCredit = 0; // مبلغ کل سفارش قبل از کسر اعتبار (برای محاسبه ۵٪ اعتبار جدید)
 let creditLookupTimer = null;
 
 function toJalaliSimple(date){
@@ -1141,6 +1142,7 @@ function updateTotal(){
   });
   const discountAmt=Math.round(subtotal*discountPct/100);
   const afterDiscount = subtotal-discountAmt;
+  currentOrderTotalBeforeCredit = afterDiscount;
   creditApplied = Math.min(customerCreditBalance, Math.max(0,afterDiscount));
   const total=afterDiscount-creditApplied;
   const subRow=document.getElementById('subtotal-row');
@@ -1204,23 +1206,15 @@ async function applyDiscount(){
   if(!code){errEl.textContent='کد تخفیف رو وارد کن';return;}
   if(applyBtn){ applyBtn.disabled=true; applyBtn.textContent='...'; }
   try{
+    const nowIso = new Date().toISOString();
     const res = await supaFetch(
-      '/rest/v1/discount_codes?code=eq.'+encodeURIComponent(code)+'&active=eq.true&used=eq.false&select=id,code,percent',
+      '/rest/v1/discount_codes?code=eq.'+encodeURIComponent(code)+'&active=eq.true&expires_at=gt.'+encodeURIComponent(nowIso)+'&select=id,code,percent',
       {headers:{'Accept':'application/json'}}
     );
     if(!res.ok) throw new Error('server error');
     const rows = await res.json();
     if(!rows || !rows.length){
-      const res2 = await supaFetch(
-        '/rest/v1/discount_codes?code=eq.'+encodeURIComponent(code)+'&select=used',
-        {headers:{'Accept':'application/json'}}
-      );
-      const rows2 = res2.ok ? await res2.json() : [];
-      if(rows2.length && rows2[0].used){
-        errEl.textContent='این کد قبلاً استفاده شده است';
-      } else {
-        errEl.textContent='کد تخفیف معتبر نیست';
-      }
+      errEl.textContent='کد تخفیف معتبر نیست یا منقضی شده';
       return;
     }
     const pct = rows[0].percent;
@@ -1290,6 +1284,20 @@ async function saveDraft(){
   if(invErrors){
     errEl.innerHTML='⚠️ موجودی کافی نیست:<br><small style="color:var(--text3)">'+invErrors.join('<br>')+'</small>';
     return;
+  }
+
+  if(discountCode){
+    try{
+      const usedRes = await supaFetch(
+        '/rest/v1/discount_code_redemptions?code=eq.'+encodeURIComponent(discountCode)+'&phone=eq.'+encodeURIComponent(phone)+'&select=id',
+        {headers:{'Accept':'application/json'}}
+      );
+      const usedRows = usedRes.ok ? await usedRes.json() : [];
+      if(usedRows && usedRows.length){
+        errEl.textContent='⛔ این کد قبلاً با همین شماره موبایل استفاده شده. اگه کد دیگه‌ای داری وارد کن یا بدون کد ادامه بده.';
+        return;
+      }
+    } catch(e){ /* اگه چک نشد، اجازه بده ادامه بده — بهتر از بلاک کردن اشتباه مشتریه */ }
   }
 
   const btn=document.getElementById('draft-btn');
@@ -1445,10 +1453,10 @@ async function finalizeOrder(){
     });
     clearTimeout(timer);
     if(discountCode){
-      supaFetch('/rest/v1/discount_codes?code=eq.'+encodeURIComponent(discountCode),{
-        method:'PATCH',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({used:true})
+      supaFetch('/rest/v1/discount_code_redemptions', {
+        method:'POST',
+        headers:{'Content-Type':'application/json','Prefer':'resolution=ignore-duplicates'},
+        body:JSON.stringify({code:discountCode, phone:lastPhone, redeemed_at:new Date().toISOString()})
       });
     }
     if(!res.ok) throw new Error('server '+(await res.text().catch(()=>'')));
@@ -1457,7 +1465,7 @@ async function finalizeOrder(){
     const trackCode=(saved && saved.tracking_code)||lastTrackCode||'';
 
     // به‌روزرسانی اعتبار مشتری: کسر اعتبار مصرف‌شده + افزودن ۵٪ اعتبار جدید از این خرید
-    const creditEarned = Math.round((currentOrderTotal||0) * 0.05);
+    const creditEarned = Math.round((currentOrderTotalBeforeCredit||currentOrderTotal||0) * 0.05);
     const newBalance = Math.max(0, (customerCreditBalance||0) - (creditApplied||0)) + creditEarned;
     try{
       await supaFetch('/rest/v1/customer_credit?on_conflict=phone', {
@@ -1640,6 +1648,7 @@ async function resumeDraft(orderId){
     if(!o) throw new Error();
     currentDraftId=o.id; lastPhone=o.customer_phone||lastPhone;
     currentOrderTotal = o.total;
+    currentOrderTotalBeforeCredit = o.total;
     const items=Array.isArray(o.items)?o.items:[];
     const meta={
       subtotal:o.subtotal||o.total,discountAmt:o.discount_amt||0,total:o.total,
