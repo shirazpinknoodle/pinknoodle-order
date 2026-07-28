@@ -226,6 +226,10 @@ body{font-family:'Vazirmatn',Tahoma,sans-serif;background:
           <span class="summary-label" id="discount-label">تخفیف</span>
           <span style="color:var(--green);" id="discount-val"></span>
         </div>
+        <div class="summary-row" id="credit-row" style="display:none;">
+          <span class="summary-label">🎁 اعتبار حساب شما</span>
+          <span style="color:var(--green);" id="credit-val"></span>
+        </div>
         <div class="total-row"><span>جمع کل</span><span id="order-total">۰ تومان</span></div>
       </div>
     </div>
@@ -267,8 +271,9 @@ body{font-family:'Vazirmatn',Tahoma,sans-serif;background:
       </div>
       <div class="form-group" style="margin-bottom:0;">
         <label class="form-label">شماره موبایل *</label>
-        <input class="form-input ltr" id="cust-phone" type="tel" placeholder="09..." maxlength="11">
+        <input class="form-input ltr" id="cust-phone" type="tel" placeholder="09..." maxlength="11" oninput="onCustPhoneInput()">
         <div class="hint">⚠️ با این شماره می‌تونی بعداً برگردی و پرداخت رو تکمیل کنی</div>
+        <div class="hint" id="cust-credit-hint" style="color:var(--green);display:none;"></div>
       </div>
     </div>
   </div>
@@ -420,9 +425,9 @@ body{font-family:'Vazirmatn',Tahoma,sans-serif;background:
     زمان انتخابی شما، زمان حضور شما در صف تحویل‌گیری می‌باشد.
   </div>
   <div class="order-code-box">
-    <div class="order-code-label">شماره سفارش</div>
-    <div class="order-code-val" id="success-order-num">—</div>
-    <div class="order-code-sub" id="success-order-info"></div>
+    <div class="order-code-label">🎁 اعتبار خرید بعدی شما</div>
+    <div class="order-code-val" id="success-credit-earned">۰ تومان</div>
+    <div class="order-code-sub">۵٪ از این خرید، برای خرید بعدی به حسابتون (با همین شماره موبایل) اضافه شد</div>
   </div>
   <div class="order-code-box" style="margin-top:0;border-top:none;border-radius:0 0 var(--radius-sm) var(--radius-sm);background:rgba(236,72,153,.07);">
     <div class="order-code-label">کد پیگیری</div>
@@ -627,6 +632,10 @@ let lastPhone    = '';
 let lastTrackCode = '';
 let takenSlots   = {};
 let isEditingDraft = false;
+let customerCreditBalance = 0; // اعتبار فعلی مشتری (بر اساس شماره موبایل واردشده)
+let creditApplied = 0; // مقداری از اعتبار که توی همین سفارش استفاده می‌شه
+let currentOrderTotal = 0; // مبلغ نهایی همین سفارش (برای محاسبه ۵٪ اعتبار جدید موقع تایید پرداخت)
+let creditLookupTimer = null;
 
 function toJalaliSimple(date){
   let gy=date.getFullYear(),gm=date.getMonth()+1,gd=date.getDate();
@@ -1131,9 +1140,12 @@ function updateTotal(){
     }
   });
   const discountAmt=Math.round(subtotal*discountPct/100);
-  const total=subtotal-discountAmt;
+  const afterDiscount = subtotal-discountAmt;
+  creditApplied = Math.min(customerCreditBalance, Math.max(0,afterDiscount));
+  const total=afterDiscount-creditApplied;
   const subRow=document.getElementById('subtotal-row');
   const discRow=document.getElementById('discount-row');
+  const creditRow=document.getElementById('credit-row');
   if(discountPct>0){
     subRow.style.display='flex';
     document.getElementById('subtotal-val').textContent=fmt(subtotal)+' تومان';
@@ -1141,8 +1153,48 @@ function updateTotal(){
     document.getElementById('discount-label').textContent='تخفیف '+tp(discountPct)+'٪';
     document.getElementById('discount-val').textContent='−'+fmt(discountAmt)+' تومان';
   } else {subRow.style.display='none';discRow.style.display='none';}
+  if(creditApplied>0){
+    subRow.style.display='flex';
+    document.getElementById('subtotal-val').textContent=fmt(subtotal)+' تومان';
+    creditRow.style.display='flex';
+    document.getElementById('credit-val').textContent='−'+fmt(creditApplied)+' تومان';
+  } else if(creditRow){ creditRow.style.display='none'; }
   document.getElementById('order-total').textContent=fmt(total)+' تومان';
-  return {subtotal,discountAmt,total};
+  return {subtotal,discountAmt,creditApplied,total};
+}
+
+// ── اعتبار مشتری (۵٪ کش‌بک بر اساس شماره موبایل) ──
+async function fetchCustomerCredit(phone){
+  try{
+    const res = await supaFetch('/rest/v1/customer_credit?phone=eq.'+encodeURIComponent(phone)+'&select=balance');
+    if(!res.ok) return 0;
+    const rows = await res.json();
+    return (Array.isArray(rows) && rows.length) ? (Number(rows[0].balance)||0) : 0;
+  } catch(e){ return 0; }
+}
+
+function onCustPhoneInput(){
+  const hintEl = document.getElementById('cust-credit-hint');
+  const phone = normalizePhone(document.getElementById('cust-phone').value);
+  if(creditLookupTimer) clearTimeout(creditLookupTimer);
+  if(!phone || phone.length<10){
+    customerCreditBalance = 0;
+    if(hintEl){ hintEl.style.display='none'; }
+    updateTotal();
+    return;
+  }
+  creditLookupTimer = setTimeout(async ()=>{
+    customerCreditBalance = await fetchCustomerCredit(phone);
+    if(hintEl){
+      if(customerCreditBalance>0){
+        hintEl.style.display='block';
+        hintEl.textContent = '🎁 شما ' + fmt(customerCreditBalance) + ' تومان اعتبار دارید — توی همین خرید اعمال می‌شه';
+      } else {
+        hintEl.style.display='none';
+      }
+    }
+    updateTotal();
+  }, 450);
 }
 
 async function applyDiscount(){
@@ -1243,7 +1295,8 @@ async function saveDraft(){
   const btn=document.getElementById('draft-btn');
   btn.disabled=true; btn.textContent=isEdit?'در حال ذخیره تغییرات...':'در حال ثبت...';
   try{
-    const {subtotal,discountAmt,total}=updateTotal();
+    const {subtotal,discountAmt,creditApplied:usedCredit,total}=updateTotal();
+    currentOrderTotal = total;
     const reservedUntil = new Date(Date.now() + 5*60*1000).toISOString();
     const slotCode = isEdit ? (lastTrackCode || generateSlotCode(selectedTime)) : generateSlotCode(selectedTime);
     const body={
@@ -1402,9 +1455,20 @@ async function finalizeOrder(){
     const data=await res.json();
     const saved=Array.isArray(data)?data[0]:data;
     const trackCode=(saved && saved.tracking_code)||lastTrackCode||'';
-    document.getElementById('success-order-num').textContent=(saved && saved.order_number)?tp(String(saved.order_number)):'—';
+
+    // به‌روزرسانی اعتبار مشتری: کسر اعتبار مصرف‌شده + افزودن ۵٪ اعتبار جدید از این خرید
+    const creditEarned = Math.round((currentOrderTotal||0) * 0.05);
+    const newBalance = Math.max(0, (customerCreditBalance||0) - (creditApplied||0)) + creditEarned;
+    try{
+      await supaFetch('/rest/v1/customer_credit?on_conflict=phone', {
+        method:'POST',
+        headers:{'Content-Type':'application/json','Prefer':'resolution=merge-duplicates'},
+        body: JSON.stringify({ phone: lastPhone, balance: newBalance })
+      });
+    } catch(e){ console.error('خطا در ثبت اعتبار مشتری', e); }
+
+    document.getElementById('success-credit-earned').textContent = fmt(creditEarned)+' تومان';
     document.getElementById('success-tracking-code').textContent=trackCode?tp(trackCode):'—';
-    document.getElementById('success-order-info').textContent='📱 '+lastPhone;
     showScreen('success-screen');
     document.getElementById('success-screen').style.display='flex';
     currentDraftId=null;
@@ -1575,6 +1639,7 @@ async function resumeDraft(orderId){
     const o=Array.isArray(data)?data[0]:data;
     if(!o) throw new Error();
     currentDraftId=o.id; lastPhone=o.customer_phone||lastPhone;
+    currentOrderTotal = o.total;
     const items=Array.isArray(o.items)?o.items:[];
     const meta={
       subtotal:o.subtotal||o.total,discountAmt:o.discount_amt||0,total:o.total,
