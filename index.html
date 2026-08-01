@@ -630,13 +630,19 @@ let lastTrackCode = '';
 let takenSlots   = {};
 let isEditingDraft = false;
 let onlineOrdersEnabled = true; // وضعیت پذیرش سفارش آنلاین (از تنظیمات صندوق کنترل می‌شه)
+let shopOpenHour = 20;
+let shopCloseHour = 22;
 
 async function checkOnlineOrdersEnabled(){
   try{
-    const res = await supaFetch('/rest/v1/settings?key=eq.online_orders_enabled&select=value');
+    const res = await supaFetch('/rest/v1/settings?key=in.(online_orders_enabled,shop_open_hour,shop_close_hour)&select=key,value');
     if(res.ok){
       const rows = await res.json();
-      onlineOrdersEnabled = (Array.isArray(rows) && rows.length) ? rows[0].value !== 'false' : true;
+      const map = {};
+      (rows||[]).forEach(r=>{ map[r.key]=r.value; });
+      onlineOrdersEnabled = map.online_orders_enabled !== 'false';
+      shopOpenHour = map.shop_open_hour!==undefined ? (parseInt(map.shop_open_hour)||0) : 20;
+      shopCloseHour = map.shop_close_hour!==undefined ? (parseInt(map.shop_close_hour)||0) : 22;
     } else {
       onlineOrdersEnabled = true; // اگه چک نشد، مانع سفارش گرفتن مشتری نشیم
     }
@@ -644,16 +650,37 @@ async function checkOnlineOrdersEnabled(){
   applyOnlineOrdersEnabledUI();
 }
 
+// آیا الان (بر اساس ساعت واقعی ایران) توی بازه‌ی ساعت فروش آنلاین هستیم؟
+function isWithinShopHours(){
+  const now = new Date();
+  const iranOffset = 3.5 * 60;
+  const utcMs = now.getTime() + now.getTimezoneOffset() * 60000;
+  const iranDate = new Date(utcMs + iranOffset * 60000);
+  const h = iranDate.getHours() + iranDate.getMinutes()/60;
+  if(shopCloseHour > shopOpenHour){
+    return h >= shopOpenHour && h < shopCloseHour;
+  }
+  // بازه از شب تا بعد از نیمه‌شب ادامه داره (مثلاً ۲۰ تا ۱)
+  return h >= shopOpenHour || h < shopCloseHour;
+}
+
 function applyOnlineOrdersEnabledUI(){
   const box = document.getElementById('landing-status-box');
   const card = document.getElementById('order-card');
   if(!box || !card) return;
-  if(onlineOrdersEnabled){
-    box.innerHTML = '🍜 سفارش آنلاین Pink Noodle<div class="open-badge" style="margin-top:6px;"><span class="open-dot"></span>همیشه باز هستیم</div>';
+  const withinHours = isWithinShopHours();
+  if(onlineOrdersEnabled && withinHours){
+    box.innerHTML = '🍜 سفارش آنلاین Pink Noodle<div class="open-badge" style="margin-top:6px;"><span class="open-dot"></span>الان باز هستیم</div>';
     card.style.opacity = '';
     card.style.pointerEvents = '';
-  } else {
+  } else if(!onlineOrdersEnabled){
     box.innerHTML = '⏸ سفارش‌گیری آنلاین موقتاً غیرفعاله<div style="font-size:11px;color:var(--text3);margin-top:6px;">لطفاً بعداً دوباره سر بزنید یا تماس بگیرید</div>';
+    card.style.opacity = '.4';
+    card.style.pointerEvents = 'none';
+  } else {
+    const openTxt = String(shopOpenHour).padStart(2,'0')+':۰۰';
+    const closeTxt = String(shopCloseHour).padStart(2,'0')+':۰۰';
+    box.innerHTML = '🌙 الان خارج از ساعت فروش آنلاینیم<div style="font-size:11px;color:var(--text3);margin-top:6px;">ساعت فعالیت: '+openTxt+' تا '+closeTxt+'</div>';
     card.style.opacity = '.4';
     card.style.pointerEvents = 'none';
   }
@@ -736,6 +763,12 @@ function stopInventoryPolling(){
 function goToOrder(){
   if(!onlineOrdersEnabled){
     alert('سفارش‌گیری آنلاین در حال حاضر غیرفعاله. لطفاً بعداً دوباره امتحان کنید.');
+    return;
+  }
+  if(!isWithinShopHours()){
+    const openTxt = String(shopOpenHour).padStart(2,'0')+':۰۰';
+    const closeTxt = String(shopCloseHour).padStart(2,'0')+':۰۰';
+    alert('الان خارج از ساعت فروش آنلاینیم. ساعت فعالیت: '+openTxt+' تا '+closeTxt);
     return;
   }
   isEditingDraft=false;
@@ -1283,6 +1316,10 @@ async function saveDraft(){
   await checkOnlineOrdersEnabled();
   if(!onlineOrdersEnabled){
     errEl.textContent='⛔ سفارش‌گیری آنلاین همین الان غیرفعال شد. لطفاً بعداً دوباره امتحان کنید.';
+    return;
+  }
+  if(!isWithinShopHours()){
+    errEl.textContent='⛔ الان خارج از ساعت فروش آنلاینیم.';
     return;
   }
   const name=(document.getElementById('cust-name').value||'').trim();
