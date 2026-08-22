@@ -457,15 +457,16 @@ const SLOT_CAPACITY = 1;
 
 // بازه‌های ظرفیت آشپزخانه: [شروع(دقیقه از نیمه‌شب), پایان(دقیقه), فاصله(دقیقه)]
 const SLOT_CAPACITY_WINDOWS = [
-  [20*60+0,  20*60+30, 2.5],
-  [20*60+30, 23*60+0,  3],
+  [19*60+0,  19*60+30, 2.5],
+  [19*60+30, 23*60+0,  3],
   [23*60+0,  23*60+40, 2.5],
   [23*60+40, 23*60+59, 2.5]   // بعد از ۲۳:۴۰ تا نزدیک نیمه‌شب — فقط صندوق (نگاه کن به getSlotChannelMap)
 ];
 
-// بازه‌های سهمیه‌ی کانال: [شروع, پایان, درصد صندوق]
+// بازه‌های سهمیه‌ی کانال: [شروع, پایان, درصد صندوق] — فقط پیش‌فرضِ اولیه است؛
+// مقدار واقعی هر اسلات را می‌شود از پنل مدیریت (تنظیم دستی اسلات‌ها) عوض کرد.
 const SLOT_QUOTA_WINDOWS = [
-  [20*60+0,  20*60+30, 80],
+  [19*60+0,  20*60+30, 80],
   [20*60+30, 21*60+0,  50],
   [21*60+0,  22*60+30, 35],
   [22*60+30, 23*60+20, 50],
@@ -474,7 +475,7 @@ const SLOT_QUOTA_WINDOWS = [
 
 // بازه‌های قفل آنلاین: [شروع, پایان, حداقل فاصله لازم تا اسلات (دقیقه)]
 const ONLINE_LOCK_WINDOWS = [
-  [20*60+0,  20*60+30, 20],
+  [19*60+0,  20*60+30, 20],
   [20*60+30, 21*60+0,  30],
   [21*60+0,  22*60+30, 45],
   [22*60+30, 23*60+0,  30],
@@ -494,8 +495,9 @@ function generateAllSlots(){
   return slots;
 }
 
-// برچسب کانال هر اسلات: 'pos' یا 'online' — با الگوریتم پخش یکنواخت (Bresenham)
-function getSlotChannelMap(){
+// برچسب پیش‌فرضِ کانال هر اسلات: 'pos' یا 'online' — با الگوریتم پخش یکنواخت (Bresenham)
+// این فقط «پیش‌فرض» اولیه‌ست؛ ادمین می‌تونه از پنل مدیریت هر اسلات رو دستی عوض کنه.
+function computeDefaultSlotChannelMap(){
   const map = {};
   SLOT_QUOTA_WINDOWS.forEach(([winStart,winEnd,posPct])=>{
     const winSlots = generateAllSlots().filter(t=>{
@@ -518,6 +520,37 @@ function getSlotChannelMap(){
     const [h,m]=t.split(':').map(Number);
     if(h*60+m > 23*60+40) map[t]='pos';
   });
+  return map;
+}
+
+// override هایی که ادمین دستی از پنل مدیریت (فایل صندوق) تنظیم کرده — از همون کلید
+// Supabase که صندوق می‌نویسه خونده می‌شه، تا هردو همیشه هماهنگ باشن.
+let SLOT_CHANNEL_OVERRIDES = null;
+
+async function loadSlotChannelOverrides(){
+  try{
+    const res = await supaFetch('/rest/v1/settings?key=eq.slot_channel_overrides&select=value');
+    if(res.ok){
+      const rows = await res.json();
+      SLOT_CHANNEL_OVERRIDES = (Array.isArray(rows) && rows.length) ? JSON.parse(rows[0].value || '{}') : {};
+    } else {
+      SLOT_CHANNEL_OVERRIDES = SLOT_CHANNEL_OVERRIDES || {};
+    }
+  } catch(e){
+    SLOT_CHANNEL_OVERRIDES = SLOT_CHANNEL_OVERRIDES || {};
+  }
+}
+
+// برچسب نهایی کانال هر اسلات: پیش‌فرضِ الگوریتمی + override های دستی ادمین روش
+function getSlotChannelMap(){
+  const map = computeDefaultSlotChannelMap();
+  if(SLOT_CHANNEL_OVERRIDES){
+    Object.keys(SLOT_CHANNEL_OVERRIDES).forEach(t=>{
+      if(SLOT_CHANNEL_OVERRIDES[t]==='pos' || SLOT_CHANNEL_OVERRIDES[t]==='online'){
+        map[t] = SLOT_CHANNEL_OVERRIDES[t];
+      }
+    });
+  }
   return map;
 }
 
@@ -571,6 +604,34 @@ async function checkOnlineInventory(items){
 }
 
 const SAUCES = ['سس تری‌یاکی','سس خامه‌ای صورتی','سس گوجوچانگ تند'];
+
+// اینکه هر آیتم کدوم سس‌ها رو می‌تونه داشته باشه — اگه آیتمی توی این نگاشت نباشه،
+// بخش سس اصلاً براش نشون داده نمی‌شه.
+const ITEM_SAUCE_OPTIONS = {
+  'نودل مرغ':         SAUCES,
+  'نودل مرغ پنیری':   SAUCES,
+  'نودل گوشت':        SAUCES,
+  'نودل گوشت پنیری':  SAUCES,
+  'نودل پنیری':       SAUCES,
+  'پاستا مرغ':        ['سس گوجوچانگ تند'],
+  'پاستا گوشت':       ['سس گوجوچانگ تند'],
+  'نودل خامه‌ای':     ['سس گوجوچانگ تند'],
+  'یوکاجی بیکن دودی': ['سس گوجوچانگ تند'],
+};
+
+// وقتی برای «نودل پنیری» «سس خامه‌ای صورتی» انتخاب بشه، مبلغ آیتم منوی
+// «سس صورتی» (که باید از پنل مدیریت منو با قیمت دلخواه ساخته بشه) به قیمتش اضافه می‌شه.
+const PINK_SAUCE_SURCHARGE_ITEMS = ['نودل پنیری'];
+function getPinkSauceSurchargePrice(){
+  const item = menu.find(m => m.name === 'سس صورتی');
+  return item ? (Number(item.price)||0) : 0;
+}
+function getItemSauceSurcharge(itemName, sauces){
+  if(PINK_SAUCE_SURCHARGE_ITEMS.includes(itemName) && Array.isArray(sauces) && sauces.includes('سس خامه‌ای صورتی')){
+    return getPinkSauceSurchargePrice();
+  }
+  return 0;
+}
 
 const ITEM_DESCRIPTIONS = {
   'نودل مرغ':        'نودل - فیله مرغ ۵۰گرم - پنیر پارمسان جعفری - سس انتخابی',
@@ -760,9 +821,9 @@ let _invPollTimer = null;
 
 function startInventoryPolling(){
   stopInventoryPolling();
-  loadInventoryLimits().then(()=>renderMenu());
+  Promise.all([loadInventoryLimits(), loadSlotChannelOverrides()]).then(()=>renderMenu());
   _invPollTimer = setInterval(async()=>{
-    await loadInventoryLimits();
+    await Promise.all([loadInventoryLimits(), loadSlotChannelOverrides()]);
     renderMenu();
   }, 15000);
 }
@@ -1145,10 +1206,12 @@ function renderMenu(){
       stockBadge = `<span style="font-size:10px;background:${bg};border:1px solid ${border};color:${color};border-radius:20px;padding:2px 8px;margin-right:4px;">موجودی: ${tp(maxQty)}</span>`;
     }
 
-    const sauceHtml = q>0 && !isDrink && !outOfStock ? `<div class="sauce-row visible">
+    const pinkSurcharge = getItemSauceSurcharge(m.name, sauces);
+    const allowedSauces = ITEM_SAUCE_OPTIONS[m.name];
+    const sauceHtml = q>0 && !isDrink && !outOfStock && allowedSauces ? `<div class="sauce-row visible">
       <span class="item-option-label label-sauce">🥫 سس برای «${m.name}» (تکی یا ترکیبی):</span>
-      <div class="sauce-chips">${SAUCES.map(s=>`<span class="sauce-chip ${sauces.includes(s)?'active':''}" onclick="toggleSauce('${m.id}','${s}')">${s}</span>`).join('')}</div>
-      ${sauces.length>0?`<span style="font-size:10px;color:var(--pink-light);margin-top:2px;">✓ ${tp(sauces.length)} سس انتخاب شده</span>`:'<span style="font-size:10px;color:var(--text3);margin-top:2px;">می‌توانید چند سس انتخاب کنید</span>'}
+      <div class="sauce-chips">${allowedSauces.map(s=>`<span class="sauce-chip ${sauces.includes(s)?'active':''}" onclick="toggleSauce('${m.id}','${s}')">${s}${s==='سس خامه‌ای صورتی'&&PINK_SAUCE_SURCHARGE_ITEMS.includes(m.name)&&getPinkSauceSurchargePrice()>0?` (+${fmt(getPinkSauceSurchargePrice())})`:''}</span>`).join('')}</div>
+      ${sauces.length>0?`<span style="font-size:10px;color:var(--pink-light);margin-top:2px;">✓ ${tp(sauces.length)} سس انتخاب شده${pinkSurcharge>0?` — ${fmt(pinkSurcharge)} تومان اضافه`:''}</span>`:'<span style="font-size:10px;color:var(--text3);margin-top:2px;">می‌توانید چند سس انتخاب کنید</span>'}
     </div>` : '';
 
     // مرغ/گوشت اضافه — فقط برای ۴ آیتم واجد شرایط (با تعداد قابل انتخاب)
@@ -1213,6 +1276,9 @@ function updateTotal(){
     const addonQty = extraMap[m.id]||0;
     if(addonKind && addonQty>0 && q>0){
       subtotal += addonQty*getExtraAddonPrice(addonKind);
+    }
+    if(q>0){
+      subtotal += q * getItemSauceSurcharge(m.name, sauceMap[m.id]);
     }
   });
   const discountAmt=Math.round(subtotal*discountPct/100);
@@ -1342,8 +1408,10 @@ async function saveDraft(){
     const addonKind = EXTRA_ADDON_ITEMS[m.name];
     const addonQty = addonKind ? (extraMap[m.id]||0) : 0;
     const unitPrice = Number(m.price);
-    const addonTotal = addonQty>0 ? addonQty*getExtraAddonPrice(addonKind) : 0;
-    return { itemId:m.id, name:m.name, qty:qtyMap[m.id], unitPrice, addonTotal, sauces:sauceMap[m.id]||[], extra: addonQty>0?addonKind:null, extraQty: addonQty };
+    const sauces = sauceMap[m.id]||[];
+    const sauceSurcharge = getItemSauceSurcharge(m.name, sauces) * qtyMap[m.id];
+    const addonTotal = (addonQty>0 ? addonQty*getExtraAddonPrice(addonKind) : 0) + sauceSurcharge;
+    return { itemId:m.id, name:m.name, qty:qtyMap[m.id], unitPrice, addonTotal, sauces, extra: addonQty>0?addonKind:null, extraQty: addonQty };
   });
   if(!items.length){errEl.textContent='حداقل یک غذا از منو انتخاب کنید';return;}
   if(deliveryType==='delivery'&&!address){errEl.textContent='آدرس را برای تحویل درب منزل وارد کنید';return;}
@@ -1761,6 +1829,7 @@ function copyCard2(){
 }
 
 // ══════════ شروع ══════════
+loadSlotChannelOverrides();
 loadMenu();
 </script>
 </body>
